@@ -1,0 +1,91 @@
+---
+// src/pages/wiki/index.astro
+import SiteLayout from '../../layouts/SiteLayout.astro'
+import { getArticles, getCategories, getTags } from '../../lib/api'
+
+const { searchParams } = Astro.url
+const tag = searchParams.get('tag') || undefined
+const category = searchParams.get('category') || undefined
+
+const [articlesResult, categories, tags] = await Promise.all([
+  getArticles({ type: 'wiki', limit: 50, tag, category }),
+  getCategories(),
+  getTags(),
+])
+
+// Group wiki articles by category
+const articles = articlesResult.results
+const grouped: Record<string, typeof articles> = {}
+
+for (const article of articles) {
+  const cats = article.categories?.split(',') || ['未分类']
+  const cat = cats[0]?.trim() || '未分类'
+  if (!grouped[cat]) grouped[cat] = []
+  grouped[cat].push(article)
+}
+---
+
+<SiteLayout title="Wiki">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <!-- Header -->
+    <div class="mb-10">
+      <div class="flex items-center gap-3 mb-2">
+        <h1 class="text-3xl font-display font-bold text-white">Wiki</h1>
+        <span class="badge-wiki">知识库</span>
+      </div>
+      <p class="text-slate-400">系统整理的技术笔记，方便查阅和学习</p>
+    </div>
+
+    <!-- Search + Filters -->
+    <div class="flex flex-wrap gap-2 mb-8">
+      <a href="/wiki" class={`tag ${!tag && !category ? 'tag-active' : ''}`}>全部</a>
+      {tags.filter(t => t.count > 0).slice(0, 10).map(t => (
+        <a href={`/wiki?tag=${t.slug}`} class={`tag ${tag === t.slug ? 'tag-active' : ''}`}>
+          #{t.name}
+        </a>
+      ))}
+    </div>
+
+    {articles.length > 0 ? (
+      <div class="space-y-10">
+        {Object.entries(grouped).map(([catName, catArticles]) => (
+          <section>
+            <div class="flex items-center gap-3 mb-4">
+              <h2 class="text-base font-semibold text-white">{catName}</h2>
+              <div class="flex-1 h-px bg-surface-700"></div>
+              <span class="text-slate-600 text-xs">{catArticles.length}</span>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {catArticles.map(article => (
+                <a 
+                  href={`/wiki/${article.slug}`}
+                  class="card group p-4 flex items-start gap-3 hover:border-accent-purple/30 transition-all"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/20 transition-colors">
+                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-medium text-slate-200 text-sm leading-5 group-hover:text-white transition-colors line-clamp-1 mb-1">
+                      {article.title}
+                    </h3>
+                    {article.excerpt && (
+                      <p class="text-slate-500 text-xs line-clamp-2 leading-4">{article.excerpt}</p>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-20 text-slate-500">
+        <div class="text-5xl mb-4">📚</div>
+        <p class="text-lg font-medium text-slate-400 mb-2">暂无 Wiki 笔记</p>
+        <a href="/admin" class="text-accent-cyan hover:text-cyan-300">去添加第一篇</a>
+      </div>
+    )}
+  </div>
+</SiteLayout>

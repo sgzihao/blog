@@ -1,0 +1,118 @@
+---
+// src/pages/blog/index.astro
+import SiteLayout from '../../layouts/SiteLayout.astro'
+import ArticleCard from '../../components/ArticleCard.astro'
+import Pagination from '../../components/Pagination.astro'
+import { getArticles, getCategories, getTags } from '../../lib/api'
+
+const { searchParams, pathname } = Astro.url
+const page = parseInt(searchParams.get('page') || '1')
+const category = searchParams.get('category') || undefined
+const tag = searchParams.get('tag') || undefined
+const limit = 9
+
+const [articlesResult, categories, tags] = await Promise.all([
+  getArticles({ type: 'blog', page, limit, category, tag }),
+  getCategories(),
+  getTags(),
+])
+---
+
+<SiteLayout title="Blog">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <!-- Page Header -->
+    <div class="mb-10">
+      <div class="flex items-center gap-3 mb-2">
+        <h1 class="text-3xl font-display font-bold text-white">Blog</h1>
+        <span class="badge-blog">文章</span>
+      </div>
+      <p class="text-slate-400">分享 AI 与科技的原创思考与技术心得</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-10">
+      <!-- Sidebar -->
+      <aside class="lg:w-56 flex-shrink-0">
+        <!-- Filter by Category -->
+        <div class="mb-6">
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">分类</h3>
+          <div class="space-y-1">
+            <a 
+              href="/blog"
+              class={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${!category ? 'bg-surface-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700/50'}`}
+            >
+              <span>全部</span>
+              <span class="text-slate-600 text-xs">{articlesResult.total}</span>
+            </a>
+            {categories.map(cat => (
+              <a 
+                href={`/blog?category=${cat.slug}`}
+                class={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${category === cat.slug ? 'bg-surface-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700/50'}`}
+              >
+                <span class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full" style={`background-color: ${cat.color}`}></span>
+                  {cat.name}
+                </span>
+                <span class="text-slate-600 text-xs">{cat.count}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">标签</h3>
+          <div class="flex flex-wrap gap-1.5">
+            {tags.slice(0, 15).map(t => (
+              <a 
+                href={`/blog?tag=${t.slug}`}
+                class={`tag text-xs ${tag === t.slug ? 'tag-active' : ''}`}
+              >
+                #{t.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <!-- Article Grid -->
+      <div class="flex-1 min-w-0">
+        {/* Active filters */}
+        {(category || tag) && (
+          <div class="flex items-center gap-2 mb-6 text-sm">
+            <span class="text-slate-400">筛选：</span>
+            {category && <span class="px-2.5 py-1 rounded-full bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20">{categories.find(c => c.slug === category)?.name || category}</span>}
+            {tag && <span class="px-2.5 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20">#{tags.find(t => t.slug === tag)?.name || tag}</span>}
+            <a href="/blog" class="text-slate-500 hover:text-slate-300 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              清除
+            </a>
+          </div>
+        )}
+
+        {articlesResult.results.length > 0 ? (
+          <>
+            <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+              {articlesResult.results.map((article, i) => (
+                <ArticleCard article={article} class={`stagger-${Math.min(i+1, 5)}`} />
+              ))}
+            </div>
+            <Pagination 
+              page={page} 
+              total={articlesResult.total} 
+              limit={limit}
+              baseUrl={pathname + '?' + searchParams.toString()}
+            />
+          </>
+        ) : (
+          <div class="text-center py-20 text-slate-500">
+            <div class="text-5xl mb-4">🔍</div>
+            <p class="text-lg font-medium text-slate-400 mb-2">暂无文章</p>
+            <p class="text-sm">尝试选择其他分类或标签</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</SiteLayout>

@@ -1,0 +1,17 @@
+---
+// src/pages/404.astro
+import SiteLayout from '../layouts/SiteLayout.astro'
+---
+
+<SiteLayout title="页面未找到">
+  <div class="max-w-lg mx-auto px-4 sm:px-6 py-32 text-center">
+    <div class="text-8xl mb-6 opacity-80">🤖</div>
+    <h1 class="text-6xl font-display font-bold text-white mb-4">404</h1>
+    <p class="text-slate-400 text-lg mb-2">哎，这个页面不存在</p>
+    <p class="text-slate-500 text-sm mb-8">可能已被删除，或者 URL 输入有误</p>
+    <div class="flex items-center justify-center gap-3">
+      <a href="/" class="btn-primary">返回首页</a>
+      <a href="/search" class="btn-secondary">搜索内容</a>
+    </div>
+  </div>
+</SiteLayout>

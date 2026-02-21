@@ -1,0 +1,19 @@
+name = "techblog-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# ⚠️ 将下面的 database_id 替换为你实际的 D1 database_id
+[[d1_databases]]
+binding = "DB"
+database_name = "techblog-db"
+database_id = "5a3dfe2f-2fb9-4cc2-bac5-6192df2d349b"
+
+[vars]
+# 允许的前端域名（CORS）
+ALLOWED_ORIGIN = "https://72ecf5cf.techblog-2on.pages.dev"
+
+# ADMIN_TOKEN 通过 `wrangler secret put ADMIN_TOKEN` 设置，不要写在这里
+
+[dev]
+port = 8787

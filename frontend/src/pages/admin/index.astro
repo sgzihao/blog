@@ -1,0 +1,866 @@
+---
+// src/pages/admin/index.astro
+import BaseLayout from '../../layouts/BaseLayout.astro'
+---
+
+<BaseLayout title="管理后台">
+  <div id="app" class="min-h-screen bg-surface-900">
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+      <div class="w-full max-w-sm">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-cyan/20 to-accent-purple/20 border border-accent-cyan/20 text-3xl flex items-center justify-center mx-auto mb-4">🤖</div>
+          <h1 class="text-2xl font-display font-bold text-white">管理后台</h1>
+          <p class="text-slate-400 text-sm mt-1">输入管理员 Token 登录</p>
+        </div>
+        <div class="card p-6">
+          <div class="mb-4">
+            <label class="label">Admin Token</label>
+            <input 
+              type="password" 
+              id="token-input"
+              class="input"
+              placeholder="输入你的 ADMIN_TOKEN"
+              autocomplete="current-password"
+            />
+          </div>
+          <button id="login-btn" class="btn-primary w-full justify-center">
+            登录
+          </button>
+          <p id="login-error" class="text-red-400 text-sm text-center mt-3 hidden">Token 错误，请重试</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Dashboard (hidden until login) -->
+    <div id="admin-screen" class="hidden">
+      <!-- Top Bar -->
+      <header class="sticky top-0 z-50 border-b border-surface-600/50 backdrop-blur-xl bg-surface-900/80">
+        <div class="flex items-center justify-between px-6 h-16">
+          <div class="flex items-center gap-4">
+            <a href="/" class="text-slate-400 hover:text-slate-200 transition-colors" title="返回网站">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+              </svg>
+            </a>
+            <h1 class="text-white font-semibold">管理后台</h1>
+          </div>
+
+          <!-- Tab Nav -->
+          <nav class="flex items-center gap-1">
+            {[
+              { id: 'articles', label: '文章', icon: '📝' },
+              { id: 'editor', label: '写作', icon: '✏️' },
+              { id: 'taxonomy', label: '分类/标签', icon: '🏷️' },
+              { id: 'stats', label: '统计', icon: '📊' },
+            ].map(tab => (
+              <button 
+                class="tab-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200 hover:bg-surface-700/50"
+                data-tab={tab.id}
+              >
+                <span class="mr-1">{tab.icon}</span>{tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <button id="logout-btn" class="btn-ghost text-xs text-slate-500">
+            退出登录
+          </button>
+        </div>
+      </header>
+
+      <!-- Tab Content -->
+      <main class="p-6 max-w-7xl mx-auto">
+
+        <!-- ====== ARTICLES TAB ====== -->
+        <div id="tab-articles" class="tab-content">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <h2 class="text-xl font-display font-semibold text-white">文章管理</h2>
+              <div class="flex gap-2">
+                <select id="filter-type" class="select w-24 text-xs py-1.5">
+                  <option value="">全部</option>
+                  <option value="blog">Blog</option>
+                  <option value="wiki">Wiki</option>
+                </select>
+                <select id="filter-status" class="select w-24 text-xs py-1.5">
+                  <option value="">全部状态</option>
+                  <option value="published">已发布</option>
+                  <option value="draft">草稿</option>
+                </select>
+              </div>
+            </div>
+            <button id="new-article-btn" class="btn-primary text-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              新建文章
+            </button>
+          </div>
+
+          <div id="articles-loading" class="text-center py-16 text-slate-500">加载中...</div>
+          <div id="articles-table" class="hidden">
+            <div class="card overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-surface-700 border-b border-surface-600">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-slate-400 font-medium">标题</th>
+                    <th class="px-4 py-3 text-left text-slate-400 font-medium w-20">类型</th>
+                    <th class="px-4 py-3 text-left text-slate-400 font-medium w-24">状态</th>
+                    <th class="px-4 py-3 text-left text-slate-400 font-medium w-28 hidden md:table-cell">更新时间</th>
+                    <th class="px-4 py-3 text-right text-slate-400 font-medium w-32">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="articles-tbody" class="divide-y divide-surface-700"></tbody>
+              </table>
+            </div>
+            <div id="articles-empty" class="hidden text-center py-16 text-slate-500">
+              暂无文章
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== EDITOR TAB ====== -->
+        <div id="tab-editor" class="tab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-display font-semibold text-white" id="editor-title-heading">新建文章</h2>
+            <div class="flex gap-2">
+              <button id="save-draft-btn" class="btn-secondary text-sm">保存草稿</button>
+              <button id="publish-btn" class="btn-primary text-sm">发布</button>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-5 gap-6">
+            <!-- Editor Form -->
+            <div class="lg:col-span-3 space-y-4">
+              <div>
+                <label class="label">标题 <span class="text-red-400">*</span></label>
+                <input id="ed-title" class="input text-lg font-medium" placeholder="文章标题..." />
+              </div>
+              <div>
+                <label class="label">Slug (URL) <span class="text-red-400">*</span></label>
+                <input id="ed-slug" class="input font-mono text-sm" placeholder="my-article-slug" />
+              </div>
+              <div>
+                <label class="label">摘要</label>
+                <textarea id="ed-excerpt" class="textarea h-20" placeholder="可选，不填将自动截取内容..."></textarea>
+              </div>
+              <div>
+                <label class="label flex items-center justify-between">
+                  <span>正文 (Markdown) <span class="text-red-400">*</span></span>
+                  <button id="preview-toggle" class="text-xs text-accent-cyan hover:text-cyan-300 transition-colors">预览</button>
+                </label>
+                <textarea id="ed-content" class="textarea font-mono text-sm h-[450px] leading-6" placeholder="# 标题&#10;&#10;正文内容，支持 Markdown..."></textarea>
+                <div id="ed-preview" class="hidden card p-6 prose-custom min-h-[450px] overflow-y-auto max-h-[450px]"></div>
+              </div>
+            </div>
+
+            <!-- Sidebar Settings -->
+            <div class="lg:col-span-2 space-y-4">
+              <!-- Type -->
+              <div class="card p-4">
+                <label class="label">类型</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <label class="flex items-center gap-2 p-2 rounded-lg bg-surface-700 cursor-pointer">
+                    <input type="radio" name="ed-type" value="blog" id="type-blog" class="accent-cyan-400" checked />
+                    <span class="text-sm">📝 Blog</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-2 rounded-lg bg-surface-700 cursor-pointer">
+                    <input type="radio" name="ed-type" value="wiki" id="type-wiki" class="accent-purple-400" />
+                    <span class="text-sm">📚 Wiki</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Cover Image -->
+              <div class="card p-4">
+                <label class="label">封面图片</label>
+                <div id="cover-preview" class="hidden aspect-video rounded-lg overflow-hidden mb-3">
+                  <img id="cover-img" src="" alt="封面" class="w-full h-full object-cover" />
+                </div>
+                <div 
+                  id="cover-drop-zone"
+                  class="border-2 border-dashed border-surface-600 rounded-xl p-6 text-center cursor-pointer hover:border-accent-cyan/40 transition-colors"
+                >
+                  <div class="text-slate-500 text-sm">
+                    <div class="text-2xl mb-2">🖼️</div>
+                    <p>点击或拖拽上传图片</p>
+                    <p class="text-xs mt-1 text-slate-600">JPG, PNG, WebP · 最大 2MB</p>
+                  </div>
+                  <input type="file" id="cover-file-input" accept="image/*" class="hidden" />
+                </div>
+                <input id="ed-cover" class="input mt-2 text-sm" placeholder="或输入图片 URL..." />
+                <div id="upload-progress" class="hidden mt-2">
+                  <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <div class="w-4 h-4 border-2 border-accent-cyan/30 border-t-accent-cyan rounded-full animate-spin"></div>
+                    上传中...
+                  </div>
+                </div>
+              </div>
+
+              <!-- Categories -->
+              <div class="card p-4">
+                <label class="label">分类</label>
+                <div id="categories-checkboxes" class="space-y-2 max-h-40 overflow-y-auto">
+                  <div class="text-slate-500 text-xs">加载中...</div>
+                </div>
+              </div>
+
+              <!-- Tags -->
+              <div class="card p-4">
+                <label class="label">标签</label>
+                <div id="tags-checkboxes" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                  <div class="text-slate-500 text-xs">加载中...</div>
+                </div>
+              </div>
+
+              <!-- Danger Zone (for edit mode) -->
+              <div id="danger-zone" class="card p-4 border-red-500/20 hidden">
+                <h3 class="text-sm font-medium text-red-400 mb-3">危险操作</h3>
+                <button id="delete-article-btn" class="btn-danger w-full justify-center text-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  删除此文章
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== TAXONOMY TAB ====== -->
+        <div id="tab-taxonomy" class="tab-content hidden">
+          <div class="grid md:grid-cols-2 gap-8">
+            <!-- Categories -->
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-display font-semibold text-white">分类管理</h2>
+                <button id="new-cat-btn" class="btn-secondary text-sm">+ 新建分类</button>
+              </div>
+
+              <!-- New Category Form -->
+              <div id="new-cat-form" class="card p-4 mb-4 hidden">
+                <div class="space-y-3">
+                  <input id="cat-name" class="input text-sm" placeholder="分类名称" />
+                  <input id="cat-slug" class="input text-sm font-mono" placeholder="slug" />
+                  <input id="cat-desc" class="input text-sm" placeholder="描述（可选）" />
+                  <div class="flex items-center gap-2">
+                    <label class="text-sm text-slate-400">颜色：</label>
+                    <input type="color" id="cat-color" value="#6366f1" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0" />
+                  </div>
+                  <div class="flex gap-2">
+                    <button id="save-cat-btn" class="btn-primary text-sm flex-1 justify-center">保存</button>
+                    <button id="cancel-cat-btn" class="btn-secondary text-sm">取消</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="categories-list" class="space-y-2">
+                <div class="text-slate-500 text-sm text-center py-8">加载中...</div>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-display font-semibold text-white">标签管理</h2>
+                <button id="new-tag-btn" class="btn-secondary text-sm">+ 新建标签</button>
+              </div>
+
+              <!-- New Tag Form -->
+              <div id="new-tag-form" class="card p-4 mb-4 hidden">
+                <div class="space-y-3">
+                  <input id="tag-name" class="input text-sm" placeholder="标签名称" />
+                  <input id="tag-slug" class="input text-sm font-mono" placeholder="slug" />
+                  <div class="flex gap-2">
+                    <button id="save-tag-btn" class="btn-primary text-sm flex-1 justify-center">保存</button>
+                    <button id="cancel-tag-btn" class="btn-secondary text-sm">取消</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="tags-list" class="flex flex-wrap gap-2">
+                <div class="text-slate-500 text-sm">加载中...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== STATS TAB ====== -->
+        <div id="tab-stats" class="tab-content hidden">
+          <h2 class="text-xl font-display font-semibold text-white mb-6">数据统计</h2>
+          <div id="stats-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div class="text-center py-8 text-slate-500">加载中...</div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+  </div>
+</BaseLayout>
+
+<script>
+  // ==================== State ====================
+  let token = ''
+  let editingSlug = ''
+  let categories: any[] = []
+  let tags: any[] = []
+  
+  const API = (import.meta as any).env.PUBLIC_API_URL || 'http://localhost:8787'
+
+  // ==================== DOM Refs ====================
+  const loginScreen = document.getElementById('login-screen')!
+  const adminScreen = document.getElementById('admin-screen')!
+  const tokenInput = document.getElementById('token-input') as HTMLInputElement
+  const loginBtn = document.getElementById('login-btn')!
+  const loginError = document.getElementById('login-error')!
+  const logoutBtn = document.getElementById('logout-btn')!
+
+  // ==================== Auth ====================
+  async function doLogin() {
+    const t = tokenInput.value.trim()
+    if (!t) return
+    
+    loginBtn.textContent = '验证中...'
+    
+    try {
+      const res = await fetch(`${API}/api/admin/stats`, {
+        headers: { 'Authorization': `Bearer ${t}` }
+      })
+      if (!res.ok) throw new Error('Invalid token')
+      
+      token = t
+      sessionStorage.setItem('admin_token', t)
+      showAdmin()
+    } catch {
+      loginError.classList.remove('hidden')
+      loginBtn.textContent = '登录'
+    }
+  }
+
+  function showAdmin() {
+    loginScreen.classList.add('hidden')
+    adminScreen.classList.remove('hidden')
+    switchTab('articles')
+    loadTaxonomy()
+    
+    // Check if we should open editor from URL
+    const editSlug = new URLSearchParams(window.location.search).get('edit')
+    if (editSlug) editArticle(editSlug)
+  }
+
+  // Try auto-login from session
+  const savedToken = sessionStorage.getItem('admin_token')
+  if (savedToken) {
+    token = savedToken
+    tokenInput.value = token
+    doLogin()
+  }
+
+  loginBtn.addEventListener('click', doLogin)
+  tokenInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin() })
+  logoutBtn.addEventListener('click', () => {
+    token = ''
+    sessionStorage.removeItem('admin_token')
+    adminScreen.classList.add('hidden')
+    loginScreen.classList.remove('hidden')
+    loginError.classList.add('hidden')
+    tokenInput.value = ''
+  })
+
+  // ==================== Tab Navigation ====================
+  function switchTab(tabId: string) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      const isActive = btn.getAttribute('data-tab') === tabId
+      btn.classList.toggle('bg-surface-700', isActive)
+      btn.classList.toggle('text-white', isActive)
+      btn.classList.toggle('text-slate-400', !isActive)
+    })
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.toggle('hidden', content.id !== `tab-${tabId}`)
+    })
+
+    // Load data for tab
+    if (tabId === 'articles') loadArticles()
+    if (tabId === 'taxonomy') loadTaxonomyUI()
+    if (tabId === 'stats') loadStats()
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')!))
+  })
+
+  // ==================== API Helpers ====================
+  async function apiFetch(path: string, opts: RequestInit = {}) {
+    const res = await fetch(`${API}${path}`, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...(opts.headers || {}),
+      }
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+      throw new Error(err.error || `HTTP ${res.status}`)
+    }
+    return res.json()
+  }
+
+  // ==================== Articles ====================
+  async function loadArticles() {
+    const tbody = document.getElementById('articles-tbody')!
+    const loading = document.getElementById('articles-loading')!
+    const table = document.getElementById('articles-table')!
+    const empty = document.getElementById('articles-empty')!
+    const filterType = (document.getElementById('filter-type') as HTMLSelectElement).value
+    const filterStatus = (document.getElementById('filter-status') as HTMLSelectElement).value
+
+    loading.classList.remove('hidden')
+    table.classList.add('hidden')
+
+    try {
+      const params = new URLSearchParams()
+      if (filterType) params.set('type', filterType)
+      if (filterStatus) params.set('status', filterStatus)
+      
+      const data = await apiFetch(`/api/admin/articles?${params}`)
+      loading.classList.add('hidden')
+      table.classList.remove('hidden')
+
+      if (data.results.length === 0) {
+        tbody.innerHTML = ''
+        empty.classList.remove('hidden')
+        return
+      }
+      empty.classList.add('hidden')
+
+      tbody.innerHTML = data.results.map((a: any) => `
+        <tr class="hover:bg-surface-700/30 transition-colors">
+          <td class="px-4 py-3">
+            <div class="font-medium text-slate-200 line-clamp-1">${a.title}</div>
+            <div class="text-slate-500 text-xs font-mono mt-0.5">${a.slug}</div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="${a.type === 'blog' ? 'badge-blog' : 'badge-wiki'}">${a.type}</span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+              a.status === 'published' 
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                : 'bg-slate-700 text-slate-400 border border-slate-600'
+            }">
+              <span class="w-1.5 h-1.5 rounded-full ${a.status === 'published' ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
+              ${a.status === 'published' ? '已发布' : '草稿'}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
+            ${new Date(a.updated_at).toLocaleDateString('zh-CN')}
+          </td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-1">
+              <a href="/${a.type}/${a.slug}" target="_blank" class="btn-ghost text-xs py-1 px-2" title="预览">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+              </a>
+              <button onclick="editArticle('${a.slug}')" class="btn-ghost text-xs py-1 px-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                编辑
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('')
+    } catch (e: any) {
+      loading.textContent = `加载失败: ${e.message}`
+    }
+  }
+
+  document.getElementById('filter-type')!.addEventListener('change', loadArticles)
+  document.getElementById('filter-status')!.addEventListener('change', loadArticles)
+  document.getElementById('new-article-btn')!.addEventListener('click', () => {
+    resetEditor()
+    switchTab('editor')
+  })
+
+  // ==================== Editor ====================
+  function resetEditor() {
+    editingSlug = ''
+    ;(document.getElementById('editor-title-heading') as HTMLElement).textContent = '新建文章'
+    ;(document.getElementById('ed-title') as HTMLInputElement).value = ''
+    ;(document.getElementById('ed-slug') as HTMLInputElement).value = ''
+    ;(document.getElementById('ed-excerpt') as HTMLTextAreaElement).value = ''
+    ;(document.getElementById('ed-content') as HTMLTextAreaElement).value = ''
+    ;(document.getElementById('ed-cover') as HTMLInputElement).value = ''
+    ;(document.getElementById('cover-img') as HTMLImageElement).src = ''
+    document.getElementById('cover-preview')!.classList.add('hidden')
+    ;(document.getElementById('type-blog') as HTMLInputElement).checked = true
+    document.getElementById('danger-zone')!.classList.add('hidden')
+    renderTaxonomyCheckboxes()
+  }
+
+  async function editArticle(slug: string) {
+    try {
+      const article = await apiFetch(`/api/articles/${slug}`)
+      editingSlug = slug
+      
+      ;(document.getElementById('editor-title-heading') as HTMLElement).textContent = '编辑文章'
+      ;(document.getElementById('ed-title') as HTMLInputElement).value = article.title
+      ;(document.getElementById('ed-slug') as HTMLInputElement).value = article.slug
+      ;(document.getElementById('ed-excerpt') as HTMLTextAreaElement).value = article.excerpt || ''
+      ;(document.getElementById('ed-content') as HTMLTextAreaElement).value = article.content
+      ;(document.getElementById('ed-cover') as HTMLInputElement).value = article.cover_image || ''
+      
+      if (article.cover_image) {
+        ;(document.getElementById('cover-img') as HTMLImageElement).src = article.cover_image
+        document.getElementById('cover-preview')!.classList.remove('hidden')
+      }
+
+      ;(document.getElementById(`type-${article.type}`) as HTMLInputElement).checked = true
+      document.getElementById('danger-zone')!.classList.remove('hidden')
+
+      // Set category/tag selections
+      const catIds = article.category_ids?.split(',').map(Number).filter(Boolean) || []
+      const tagIds = article.tag_id_list?.split(',').map(Number).filter(Boolean) || []
+      renderTaxonomyCheckboxes(catIds, tagIds)
+
+      switchTab('editor')
+    } catch (e: any) {
+      toast(`加载文章失败: ${e.message}`, 'error')
+    }
+  }
+
+  // Make editArticle available globally (called from inline onclick)
+  ;(window as any).editArticle = editArticle
+
+  async function saveArticle(status: 'published' | 'draft') {
+    const title = (document.getElementById('ed-title') as HTMLInputElement).value.trim()
+    const slug = (document.getElementById('ed-slug') as HTMLInputElement).value.trim()
+    const content = (document.getElementById('ed-content') as HTMLTextAreaElement).value.trim()
+    const excerpt = (document.getElementById('ed-excerpt') as HTMLTextAreaElement).value.trim()
+    const cover_image = (document.getElementById('ed-cover') as HTMLInputElement).value.trim()
+    const type = (document.querySelector('input[name="ed-type"]:checked') as HTMLInputElement).value
+
+    if (!title || !slug || !content) {
+      toast('请填写标题、Slug 和内容', 'error')
+      return
+    }
+
+    const category_ids = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="cat-check"]:checked')).map(el => parseInt(el.value))
+    const tag_ids = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="tag-check"]:checked')).map(el => parseInt(el.value))
+
+    const data = { title, slug, content, excerpt: excerpt || undefined, type, status, cover_image: cover_image || undefined, category_ids, tag_ids }
+
+    try {
+      if (editingSlug) {
+        await apiFetch(`/api/admin/articles/${editingSlug}`, { method: 'PUT', body: JSON.stringify(data) })
+        toast(`文章已${status === 'published' ? '发布' : '保存为草稿'}`, 'success')
+        editingSlug = slug // in case slug changed
+      } else {
+        await apiFetch(`/api/admin/articles`, { method: 'POST', body: JSON.stringify(data) })
+        editingSlug = slug
+        toast(`文章已创建${status === 'published' ? '并发布' : '（草稿）'}`, 'success')
+      }
+      document.getElementById('editor-title-heading')!.textContent = '编辑文章'
+      document.getElementById('danger-zone')!.classList.remove('hidden')
+    } catch (e: any) {
+      toast(`保存失败: ${e.message}`, 'error')
+    }
+  }
+
+  document.getElementById('publish-btn')!.addEventListener('click', () => saveArticle('published'))
+  document.getElementById('save-draft-btn')!.addEventListener('click', () => saveArticle('draft'))
+
+  document.getElementById('delete-article-btn')!.addEventListener('click', async () => {
+    if (!editingSlug) return
+    if (!confirm(`确定删除文章 "${editingSlug}"？此操作不可撤销。`)) return
+
+    try {
+      await apiFetch(`/api/admin/articles/${editingSlug}`, { method: 'DELETE' })
+      toast('文章已删除', 'success')
+      resetEditor()
+      switchTab('articles')
+    } catch (e: any) {
+      toast(`删除失败: ${e.message}`, 'error')
+    }
+  })
+
+  // Auto-generate slug from title
+  document.getElementById('ed-title')!.addEventListener('input', (e) => {
+    if (editingSlug) return // Don't auto-change slug when editing
+    const title = (e.target as HTMLInputElement).value
+    const slug = title
+      .toLowerCase()
+      .replace(/[\s_]+/g, '-')
+      .replace(/[^\w\-\u4e00-\u9fff]+/g, '')
+      .replace(/^-+|-+$/g, '')
+    ;(document.getElementById('ed-slug') as HTMLInputElement).value = slug
+  })
+
+  // Preview toggle
+  let previewMode = false
+  document.getElementById('preview-toggle')!.addEventListener('click', async () => {
+    previewMode = !previewMode
+    const textarea = document.getElementById('ed-content')!
+    const preview = document.getElementById('ed-preview')!
+    const btn = document.getElementById('preview-toggle')!
+
+    if (previewMode) {
+      const content = (textarea as HTMLTextAreaElement).value
+      const { renderMarkdown } = await import('../lib/markdown')
+      preview.innerHTML = renderMarkdown(content)
+      textarea.classList.add('hidden')
+      preview.classList.remove('hidden')
+      btn.textContent = '编辑'
+    } else {
+      textarea.classList.remove('hidden')
+      preview.classList.add('hidden')
+      btn.textContent = '预览'
+    }
+  })
+
+  // ==================== Image Upload ====================
+  const coverDropZone = document.getElementById('cover-drop-zone')!
+  const coverFileInput = document.getElementById('cover-file-input') as HTMLInputElement
+
+  coverDropZone.addEventListener('click', () => coverFileInput.click())
+  coverDropZone.addEventListener('dragover', e => { e.preventDefault(); coverDropZone.classList.add('border-accent-cyan/60') })
+  coverDropZone.addEventListener('dragleave', () => coverDropZone.classList.remove('border-accent-cyan/60'))
+  coverDropZone.addEventListener('drop', e => {
+    e.preventDefault()
+    coverDropZone.classList.remove('border-accent-cyan/60')
+    const file = e.dataTransfer?.files[0]
+    if (file) uploadCoverImage(file)
+  })
+  coverFileInput.addEventListener('change', () => {
+    const file = coverFileInput.files?.[0]
+    if (file) uploadCoverImage(file)
+  })
+
+  async function uploadCoverImage(file: File) {
+    const progress = document.getElementById('upload-progress')!
+    progress.classList.remove('hidden')
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const res = await fetch(`${API}/api/upload/image`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      })
+      if (!res.ok) throw new Error('Upload failed')
+      
+      const { url } = await res.json()
+      ;(document.getElementById('ed-cover') as HTMLInputElement).value = url
+      ;(document.getElementById('cover-img') as HTMLImageElement).src = url
+      document.getElementById('cover-preview')!.classList.remove('hidden')
+      toast('图片上传成功', 'success')
+    } catch (e: any) {
+      toast(`上传失败: ${e.message}`, 'error')
+    } finally {
+      progress.classList.add('hidden')
+    }
+  }
+
+  document.getElementById('ed-cover')!.addEventListener('change', (e) => {
+    const url = (e.target as HTMLInputElement).value
+    if (url) {
+      ;(document.getElementById('cover-img') as HTMLImageElement).src = url
+      document.getElementById('cover-preview')!.classList.remove('hidden')
+    }
+  })
+
+  // ==================== Taxonomy ====================
+  async function loadTaxonomy() {
+    const [catsRes, tagsRes] = await Promise.all([
+      fetch(`${API}/api/categories`).then(r => r.json()),
+      fetch(`${API}/api/tags`).then(r => r.json()),
+    ])
+    categories = catsRes
+    tags = tagsRes
+  }
+
+  function renderTaxonomyCheckboxes(selectedCatIds: number[] = [], selectedTagIds: number[] = []) {
+    const catContainer = document.getElementById('categories-checkboxes')!
+    const tagContainer = document.getElementById('tags-checkboxes')!
+
+    catContainer.innerHTML = categories.length > 0 ? categories.map((cat: any) => `
+      <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition-colors">
+        <input type="checkbox" name="cat-check" value="${cat.id}" ${selectedCatIds.includes(cat.id) ? 'checked' : ''} class="accent-cyan-400 rounded" />
+        <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${cat.color}"></span>
+        <span class="text-sm text-slate-300">${cat.name}</span>
+      </label>
+    `).join('') : '<span class="text-slate-500 text-xs">暂无分类，先在"分类/标签"中创建</span>'
+
+    tagContainer.innerHTML = tags.length > 0 ? tags.map((tag: any) => `
+      <label class="tag cursor-pointer ${selectedTagIds.includes(tag.id) ? 'tag-active' : ''}">
+        <input type="checkbox" name="tag-check" value="${tag.id}" ${selectedTagIds.includes(tag.id) ? 'checked' : ''} class="sr-only" />
+        #${tag.name}
+      </label>
+    `).join('') : '<span class="text-slate-500 text-xs">暂无标签</span>'
+
+    // Handle tag checkbox visual toggle
+    tagContainer.querySelectorAll<HTMLLabelElement>('label.tag').forEach(label => {
+      label.addEventListener('click', () => {
+        label.classList.toggle('tag-active')
+      })
+    })
+  }
+
+  async function loadTaxonomyUI() {
+    await loadTaxonomy()
+    renderTaxonomyCheckboxes()
+
+    // Render categories list
+    const catsList = document.getElementById('categories-list')!
+    catsList.innerHTML = categories.map((cat: any) => `
+      <div class="card p-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full" style="background-color: ${cat.color}"></span>
+          <span class="text-slate-200 text-sm">${cat.name}</span>
+          <span class="font-mono text-slate-500 text-xs">/${cat.slug}</span>
+          ${cat.count > 0 ? `<span class="text-slate-600 text-xs">${cat.count} 篇</span>` : ''}
+        </div>
+        <button onclick="deleteCategory(${cat.id})" class="text-slate-600 hover:text-red-400 transition-colors text-xs p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    `).join('') || '<div class="text-slate-500 text-sm text-center py-8">暂无分类</div>'
+
+    // Render tags list
+    const tagsList = document.getElementById('tags-list')!
+    tagsList.innerHTML = tags.map((tag: any) => `
+      <span class="tag group relative">
+        #${tag.name}
+        ${tag.count > 0 ? `<span class="text-slate-600 ml-1">${tag.count}</span>` : ''}
+        <button onclick="deleteTag(${tag.id})" class="ml-1 text-slate-600 hover:text-red-400 transition-colors">×</button>
+      </span>
+    `).join('') || '<div class="text-slate-500 text-sm">暂无标签</div>'
+  }
+
+  // Category form
+  document.getElementById('new-cat-btn')!.addEventListener('click', () => {
+    document.getElementById('new-cat-form')!.classList.toggle('hidden')
+  })
+  document.getElementById('cancel-cat-btn')!.addEventListener('click', () => {
+    document.getElementById('new-cat-form')!.classList.add('hidden')
+  })
+  document.getElementById('save-cat-btn')!.addEventListener('click', async () => {
+    const name = (document.getElementById('cat-name') as HTMLInputElement).value.trim()
+    const slug = (document.getElementById('cat-slug') as HTMLInputElement).value.trim()
+    const description = (document.getElementById('cat-desc') as HTMLInputElement).value.trim()
+    const color = (document.getElementById('cat-color') as HTMLInputElement).value
+    if (!name || !slug) return toast('请填写名称和 Slug', 'error')
+
+    try {
+      await apiFetch('/api/admin/categories', { method: 'POST', body: JSON.stringify({ name, slug, description, color }) })
+      toast('分类创建成功', 'success')
+      ;(document.getElementById('cat-name') as HTMLInputElement).value = ''
+      ;(document.getElementById('cat-slug') as HTMLInputElement).value = ''
+      document.getElementById('new-cat-form')!.classList.add('hidden')
+      await loadTaxonomyUI()
+    } catch (e: any) { toast(e.message, 'error') }
+  })
+
+  // Tag form
+  document.getElementById('new-tag-btn')!.addEventListener('click', () => {
+    document.getElementById('new-tag-form')!.classList.toggle('hidden')
+  })
+  document.getElementById('cancel-tag-btn')!.addEventListener('click', () => {
+    document.getElementById('new-tag-form')!.classList.add('hidden')
+  })
+  document.getElementById('save-tag-btn')!.addEventListener('click', async () => {
+    const name = (document.getElementById('tag-name') as HTMLInputElement).value.trim()
+    const slug = (document.getElementById('tag-slug') as HTMLInputElement).value.trim()
+    if (!name || !slug) return toast('请填写名称和 Slug', 'error')
+
+    try {
+      await apiFetch('/api/admin/tags', { method: 'POST', body: JSON.stringify({ name, slug }) })
+      toast('标签创建成功', 'success')
+      ;(document.getElementById('tag-name') as HTMLInputElement).value = ''
+      ;(document.getElementById('tag-slug') as HTMLInputElement).value = ''
+      document.getElementById('new-tag-form')!.classList.add('hidden')
+      await loadTaxonomyUI()
+    } catch (e: any) { toast(e.message, 'error') }
+  })
+
+  ;(window as any).deleteCategory = async (id: number) => {
+    if (!confirm('确定删除此分类？')) return
+    try {
+      await apiFetch(`/api/admin/categories/${id}`, { method: 'DELETE' })
+      toast('分类已删除', 'success')
+      await loadTaxonomyUI()
+    } catch (e: any) { toast(e.message, 'error') }
+  }
+
+  ;(window as any).deleteTag = async (id: number) => {
+    if (!confirm('确定删除此标签？')) return
+    try {
+      await apiFetch(`/api/admin/tags/${id}`, { method: 'DELETE' })
+      toast('标签已删除', 'success')
+      await loadTaxonomyUI()
+    } catch (e: any) { toast(e.message, 'error') }
+  }
+
+  // ==================== Stats ====================
+  async function loadStats() {
+    const grid = document.getElementById('stats-grid')!
+    try {
+      const stats = await apiFetch('/api/admin/stats')
+      const items = [
+        { label: '总文章数', value: stats.total_articles, icon: '📄', color: 'text-white' },
+        { label: '已发布', value: stats.published_articles, icon: '✅', color: 'text-emerald-400' },
+        { label: '草稿', value: stats.draft_articles, icon: '📝', color: 'text-slate-300' },
+        { label: '总浏览量', value: stats.total_views.toLocaleString(), icon: '👁️', color: 'text-accent-cyan' },
+        { label: '分类数', value: stats.total_categories, icon: '📁', color: 'text-slate-300' },
+        { label: '标签数', value: stats.total_tags, icon: '🏷️', color: 'text-slate-300' },
+      ]
+      grid.innerHTML = items.map(item => `
+        <div class="card p-6 text-center">
+          <div class="text-3xl mb-2">${item.icon}</div>
+          <div class="text-3xl font-display font-bold ${item.color} mb-1">${item.value}</div>
+          <div class="text-slate-500 text-sm">${item.label}</div>
+        </div>
+      `).join('')
+    } catch (e: any) {
+      grid.innerHTML = `<div class="text-red-400 text-sm">${e.message}</div>`
+    }
+  }
+
+  // ==================== Toast Notifications ====================
+  function toast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    const container = document.getElementById('toast-container')!
+    const t = document.createElement('div')
+    t.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium animate-in ${
+      type === 'success' ? 'bg-emerald-500/90 text-white' :
+      type === 'error' ? 'bg-red-500/90 text-white' :
+      'bg-surface-700 text-slate-200 border border-surface-600'
+    }`
+    t.innerHTML = `
+      ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+      <span>${message}</span>
+    `
+    container.appendChild(t)
+    setTimeout(() => t.remove(), 3000)
+  }
+
+  // Auto-generate tag slug from name
+  document.getElementById('tag-name')!.addEventListener('input', (e) => {
+    const name = (e.target as HTMLInputElement).value
+    ;(document.getElementById('tag-slug') as HTMLInputElement).value = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-\u4e00-\u9fff]/g, '')
+  })
+  document.getElementById('cat-name')!.addEventListener('input', (e) => {
+    const name = (e.target as HTMLInputElement).value
+    ;(document.getElementById('cat-slug') as HTMLInputElement).value = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-\u4e00-\u9fff]/g, '')
+  })
+</script>

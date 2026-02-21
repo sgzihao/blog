@@ -1,0 +1,57 @@
+---
+// src/layouts/BaseLayout.astro
+import '../styles/global.css'
+
+interface Props {
+  title?: string
+  description?: string
+  ogImage?: string
+  type?: 'website' | 'article'
+}
+
+const { 
+  title, 
+  description = import.meta.env.PUBLIC_SITE_DESCRIPTION,
+  ogImage,
+  type = 'website'
+} = Astro.props
+
+const siteName = import.meta.env.PUBLIC_SITE_NAME || 'TechBlog'
+const fullTitle = title ? `${title} — ${siteName}` : siteName
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site)
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="canonical" href={canonicalUrl} />
+  
+  <!-- SEO -->
+  <title>{fullTitle}</title>
+  <meta name="description" content={description} />
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content={type} />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:site_name" content={siteName} />
+  {ogImage && <meta property="og:image" content={ogImage} />}
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={fullTitle} />
+  <meta name="twitter:description" content={description} />
+  
+  <!-- Favicon (emoji) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
+  
+  <!-- Preconnect fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body>
+  <slot />
+</body>
+</html>

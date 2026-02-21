@@ -1,0 +1,168 @@
+---
+// src/pages/blog/[slug].astro
+import SiteLayout from '../../layouts/SiteLayout.astro'
+import { getArticle, formatDate, splitComma } from '../../lib/api'
+import { renderMarkdown, extractToc } from '../../lib/markdown'
+
+const { slug } = Astro.params
+
+let article
+try {
+  article = await getArticle(slug!)
+} catch {
+  return Astro.redirect('/404')
+}
+
+if (!article || article.status !== 'published' || article.type !== 'blog') {
+  return Astro.redirect('/404')
+}
+
+const html = renderMarkdown(article.content)
+const toc = extractToc(article.content)
+const tags = splitComma(article.tags)
+const categories = splitComma(article.categories)
+---
+
+<SiteLayout 
+  title={article.title}
+  description={article.excerpt || undefined}
+  ogImage={article.cover_image || undefined}
+  type="article"
+>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div class="flex gap-12">
+      <!-- Main Content -->
+      <article class="flex-1 min-w-0">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8">
+          <a href="/" class="hover:text-slate-300 transition-colors">首页</a>
+          <span>/</span>
+          <a href="/blog" class="hover:text-slate-300 transition-colors">Blog</a>
+          <span>/</span>
+          <span class="text-slate-400 truncate">{article.title}</span>
+        </nav>
+
+        <!-- Cover Image -->
+        {article.cover_image && (
+          <div class="aspect-video rounded-2xl overflow-hidden mb-10 border border-surface-700">
+            <img src={article.cover_image} alt={article.title} class="w-full h-full object-cover" />
+          </div>
+        )}
+
+        <!-- Article Header -->
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span class="badge-blog">📝 Blog</span>
+            {categories.map(cat => (
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-700 text-slate-300 border border-surface-600">{cat}</span>
+            ))}
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl font-display font-bold text-white leading-tight mb-5">
+            {article.title}
+          </h1>
+
+          <div class="flex flex-wrap items-center gap-5 text-sm text-slate-400">
+            <time class="flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              发布于 {formatDate(article.created_at)}
+            </time>
+            {article.updated_at !== article.created_at && (
+              <span class="flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                更新于 {formatDate(article.updated_at)}
+              </span>
+            )}
+            <span class="flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              {article.view_count} 次阅读
+            </span>
+          </div>
+        </header>
+
+        <!-- Article Content -->
+        <div class="prose-custom" set:html={html} />
+
+        <!-- Tags -->
+        {tags.length > 0 && (
+          <div class="mt-10 pt-8 border-t border-surface-700">
+            <div class="flex flex-wrap gap-2">
+              {tags.map(tag => (
+                <a href={`/blog?tag=${tag}`} class="tag">
+                  #{tag}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Article Navigation -->
+        <div class="mt-10 pt-8 border-t border-surface-700 flex items-center justify-between">
+          <a href="/blog" class="btn-secondary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            返回 Blog
+          </a>
+          <a href={`/admin?edit=${article.slug}`} class="btn-ghost text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            编辑此文
+          </a>
+        </div>
+      </article>
+
+      <!-- Table of Contents (Sidebar) -->
+      {toc.length > 0 && (
+        <aside class="hidden xl:block w-56 flex-shrink-0">
+          <div class="sticky top-24">
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">目录</h4>
+            <nav class="space-y-1" id="toc">
+              {toc.map(item => (
+                <a 
+                  href={`#${item.id}`}
+                  class={`block text-sm text-slate-400 hover:text-accent-cyan transition-colors leading-5 toc-item ${
+                    item.level === 1 ? 'font-medium' : 
+                    item.level === 2 ? 'pl-3' : 'pl-6'
+                  }`}
+                  data-id={item.id}
+                >
+                  {item.text}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </aside>
+      )}
+    </div>
+  </div>
+</SiteLayout>
+
+<!-- ToC Active State Script -->
+<script>
+  // Highlight active TOC item based on scroll position
+  const tocItems = document.querySelectorAll<HTMLElement>('.toc-item[data-id]')
+  if (tocItems.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            tocItems.forEach(item => item.classList.remove('text-accent-cyan', 'font-medium'))
+            const activeItem = document.querySelector<HTMLElement>(`.toc-item[data-id="${entry.target.id}"]`)
+            if (activeItem) activeItem.classList.add('text-accent-cyan')
+          }
+        })
+      },
+      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
+    )
+
+    document.querySelectorAll('h1[id], h2[id], h3[id]').forEach(h => observer.observe(h))
+  }
+</script>

@@ -1,0 +1,88 @@
+---
+// src/components/Pagination.astro
+interface Props {
+  page: number
+  total: number
+  limit: number
+  baseUrl: string
+}
+
+const { page, total, limit, baseUrl } = Astro.props
+const totalPages = Math.ceil(total / limit)
+
+function getPageUrl(p: number) {
+  const url = new URL(baseUrl, 'http://x')
+  url.searchParams.set('page', String(p))
+  return url.pathname + url.search
+}
+
+// 在 frontmatter 中预计算分页数字列表（含省略号），避免模板中使用复杂表达式
+const pageItems: (number | 'ellipsis')[] = []
+const filtered = Array.from({ length: totalPages }, (_, i) => i + 1)
+  .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+
+for (let i = 0; i < filtered.length; i++) {
+  if (i > 0 && filtered[i] !== filtered[i - 1] + 1) {
+    pageItems.push('ellipsis')
+  }
+  pageItems.push(filtered[i])
+}
+---
+
+{totalPages > 1 && (
+  <div class="flex items-center justify-center gap-2 mt-12">
+    <!-- Prev -->
+    {page > 1 ? (
+      <a href={getPageUrl(page - 1)} class="btn-secondary px-4 py-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        上一页
+      </a>
+    ) : (
+      <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        上一页
+      </button>
+    )}
+
+    <!-- Page Numbers -->
+    <div class="flex items-center gap-1">
+      {pageItems.map(item =>
+        item === 'ellipsis' ? (
+          <span class="px-2 text-slate-500">…</span>
+        ) : (
+          <a
+            href={getPageUrl(item)}
+            class={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+              item === page
+                ? 'bg-accent-cyan text-slate-900 font-semibold'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700'
+            }`}
+          >
+            {item}
+          </a>
+        )
+      )}
+    </div>
+
+    <!-- Next -->
+    {page < totalPages ? (
+      <a href={getPageUrl(page + 1)} class="btn-secondary px-4 py-2">
+        下一页
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    ) : (
+      <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>
+        下一页
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    )}
+  </div>
+)}

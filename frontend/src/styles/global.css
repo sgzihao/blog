@@ -1,0 +1,241 @@
+/* src/styles/global.css */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================== Base Styles ==================== */
+@layer base {
+  :root {
+    --surface-900: #0a0e1a;
+    --surface-800: #0f1629;
+    --surface-700: #151e35;
+    --surface-600: #1c2844;
+    --accent-cyan: #22d3ee;
+    --accent-purple: #a78bfa;
+    --accent-green: #34d399;
+    color-scheme: dark;
+  }
+
+  html {
+    @apply scroll-smooth;
+    background: var(--surface-900);
+  }
+
+  body {
+    @apply bg-surface-900 text-slate-200 font-sans antialiased;
+    background-image: 
+      radial-gradient(ellipse at 20% 50%, rgba(34, 211, 238, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.04) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(34, 211, 238, 0.3);
+    color: white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track { background: var(--surface-800); }
+  ::-webkit-scrollbar-thumb { 
+    background: #334155; 
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+}
+
+/* ==================== Typography (Markdown) ==================== */
+@layer components {
+  .prose-custom {
+    @apply text-slate-300 leading-7;
+
+    h1, h2, h3, h4, h5, h6 {
+      @apply text-white font-display font-semibold;
+      scroll-margin-top: 5rem;
+    }
+    h1 { @apply text-3xl mt-0 mb-6; }
+    h2 { @apply text-2xl mt-10 mb-4 pb-2 border-b border-surface-600; }
+    h3 { @apply text-xl mt-8 mb-3; }
+
+    p { @apply mb-5 leading-8; }
+
+    a {
+      @apply text-accent-cyan no-underline border-b border-accent-cyan/30 hover:border-accent-cyan transition-colors;
+    }
+
+    strong { @apply text-white font-semibold; }
+
+    code {
+      @apply text-cyan-300 bg-surface-700 px-1.5 py-0.5 rounded text-sm font-mono;
+    }
+
+    pre {
+      @apply bg-surface-800 rounded-xl p-5 overflow-x-auto border border-surface-600 my-6;
+      code {
+        @apply text-slate-200 bg-transparent p-0 text-sm;
+      }
+    }
+
+    blockquote {
+      @apply border-l-4 border-accent-cyan/50 pl-5 italic text-slate-400 my-6;
+    }
+
+    ul { @apply list-disc pl-6 mb-5 space-y-2; }
+    ol { @apply list-decimal pl-6 mb-5 space-y-2; }
+    li { @apply leading-7; }
+
+    table {
+      @apply w-full border-collapse my-6;
+      th {
+        @apply bg-surface-700 text-white font-semibold px-4 py-2 text-left border border-surface-600;
+      }
+      td {
+        @apply px-4 py-2 border border-surface-600;
+      }
+      tr:hover td {
+        @apply bg-surface-700/50;
+      }
+    }
+
+    img { @apply rounded-xl my-6 max-w-full; }
+
+    hr { @apply border-surface-600 my-8; }
+
+    mark {
+      @apply bg-accent-cyan/30 text-accent-cyan px-0.5 rounded;
+    }
+  }
+
+  /* ==================== Card Component ==================== */
+  .card {
+    @apply bg-surface-800 border border-surface-600 rounded-2xl overflow-hidden
+           hover:border-surface-500 transition-all duration-300;
+  }
+
+  .card-glow {
+    @apply card hover:shadow-lg;
+    &:hover {
+      box-shadow: 0 0 30px rgba(34, 211, 238, 0.08);
+    }
+  }
+
+  /* ==================== Button Components ==================== */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
+           bg-accent-cyan text-slate-900 font-semibold text-sm
+           hover:bg-cyan-300 active:scale-95 transition-all duration-150;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
+           bg-surface-700 text-slate-200 font-medium text-sm border border-surface-600
+           hover:bg-surface-600 hover:border-surface-500 active:scale-95 transition-all duration-150;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg
+           text-slate-400 font-medium text-sm
+           hover:text-slate-200 hover:bg-surface-700 transition-all duration-150;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl
+           bg-red-500/10 text-red-400 font-medium text-sm border border-red-500/20
+           hover:bg-red-500/20 active:scale-95 transition-all duration-150;
+  }
+
+  /* ==================== Tag/Badge Components ==================== */
+  .tag {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+           bg-surface-700 text-slate-300 border border-surface-600
+           hover:border-accent-cyan/50 hover:text-accent-cyan transition-colors cursor-pointer;
+  }
+
+  .tag-active {
+    @apply bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30;
+  }
+
+  .badge-blog {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-cyan-500/10 text-cyan-400 border border-cyan-500/20;
+  }
+
+  .badge-wiki {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-purple-500/10 text-purple-400 border border-purple-500/20;
+  }
+
+  /* ==================== Form Components ==================== */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl bg-surface-700 border border-surface-600
+           text-slate-200 placeholder-slate-500 text-sm
+           focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/20
+           transition-colors;
+  }
+
+  .select {
+    @apply input appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+  }
+
+  .textarea {
+    @apply input resize-none;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-slate-400 mb-1.5;
+  }
+
+  /* ==================== Nav ==================== */
+  .nav-link {
+    @apply text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors;
+  }
+  .nav-link-active {
+    @apply text-white;
+  }
+
+  /* ==================== Search Highlight ==================== */
+  .search-highlight mark {
+    @apply bg-accent-cyan/30 text-accent-cyan;
+  }
+}
+
+/* ==================== Highlight.js Theme ==================== */
+.hljs {
+  color: #e2e8f0;
+}
+.hljs-comment, .hljs-quote { color: #64748b; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag { color: #a78bfa; font-weight: 500; }
+.hljs-string, .hljs-attr { color: #34d399; }
+.hljs-number, .hljs-literal { color: #fb923c; }
+.hljs-built_in, .hljs-type { color: #22d3ee; }
+.hljs-function, .hljs-title { color: #60a5fa; }
+.hljs-variable, .hljs-name { color: #f1f5f9; }
+.hljs-tag { color: #f472b6; }
+.hljs-attribute { color: #22d3ee; }
+.hljs-meta { color: #94a3b8; }
+.hljs-deletion { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+.hljs-addition { background: rgba(52, 211, 153, 0.15); color: #6ee7b7; }
+
+/* ==================== Animations ==================== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }

@@ -1,0 +1,56 @@
+
+> techblog-frontend@1.0.0 dev
+> astro dev --port 4321 --host 0.0.0.0
+
+23:37:10 [types] Added src/env.d.ts type declarations
+23:37:10 [types] Generated 1ms
+
+ astro  v4.16.19 ready in 143 ms
+
+┃ Local    http://localhost:4321/
+┃ Network  http://192.168.1.8:4321/
+
+23:37:10 watching for file changes...
+23:37:10 [200] / 14ms
+
+ update  ▶ New version of Astro available: 5.17.3
+  Run npx @astrojs/upgrade to update
+
+23:37:11 [200] / 13ms
+23:37:13 [200] /blog 13ms
+23:37:15 [ERROR] [GetStaticPathsRequired] `getStaticPaths()` function is required for dynamic routes. Make sure that you `export` a `getStaticPaths` function from your dynamic route.
+  Hint:
+    See https://docs.astro.build/en/guides/routing/#dynamic-routes for more information on dynamic routes.
+    
+    Alternatively, set `output: "server"` or `output: "hybrid"` in your Astro config file to switch to a non-static server build. This error can also occur if using `export const prerender = true;`.
+    See https://docs.astro.build/en/guides/server-side-rendering/ for more information on non-static rendering.
+  Error reference:
+    https://docs.astro.build/en/reference/errors/get-static-paths-required/
+  Stack trace:
+    at /Users/alex/Downloads/techblog/frontend/src/pages/blog/[slug].astro
+    [...] See full stack trace in the browser, or rerun with --verbose.
+23:37:21 [ERROR] [GetStaticPathsRequired] `getStaticPaths()` function is required for dynamic routes. Make sure that you `export` a `getStaticPaths` function from your dynamic route.
+  Hint:
+    See https://docs.astro.build/en/guides/routing/#dynamic-routes for more information on dynamic routes.
+    
+    Alternatively, set `output: "server"` or `output: "hybrid"` in your Astro config file to switch to a non-static server build. This error can also occur if using `export const prerender = true;`.
+    See https://docs.astro.build/en/guides/server-side-rendering/ for more information on non-static rendering.
+  Error reference:
+    https://docs.astro.build/en/reference/errors/get-static-paths-required/
+  Stack trace:
+    at /Users/alex/Downloads/techblog/frontend/src/pages/blog/[slug].astro
+    [...] See full stack trace in the browser, or rerun with --verbose.
+23:37:26 [200] /wiki 17ms
+23:37:27 [200] / 34ms
+23:37:29 [200] /wiki 27ms
+23:37:30 [ERROR] [GetStaticPathsRequired] `getStaticPaths()` function is required for dynamic routes. Make sure that you `export` a `getStaticPaths` function from your dynamic route.
+  Hint:
+    See https://docs.astro.build/en/guides/routing/#dynamic-routes for more information on dynamic routes.
+    
+    Alternatively, set `output: "server"` or `output: "hybrid"` in your Astro config file to switch to a non-static server build. This error can also occur if using `export const prerender = true;`.
+    See https://docs.astro.build/en/guides/server-side-rendering/ for more information on non-static rendering.
+  Error reference:
+    https://docs.astro.build/en/reference/errors/get-static-paths-required/
+  Stack trace:
+    at validateDynamicRouteModule (file:///Users/alex/Downloads/techblog/frontend/node_modules/astro/dist/core/routing/validation.js:19:11)
+    [...] See full stack trace in the browser, or rerun with --verbose.
