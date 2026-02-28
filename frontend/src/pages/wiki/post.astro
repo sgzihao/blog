@@ -39,6 +39,8 @@ const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').repla
 </SiteLayout>
 
 <script type="module">
+  import { renderMarkdown as renderMarkdownRuntime } from '/lib/markdown.js'
+
   const runtimeConfig = document.getElementById('runtime-config')
   const API = (runtimeConfig?.getAttribute('data-api-url') || 'http://localhost:8787').replace(/\/+$/, '')
   const slug = new URLSearchParams(window.location.search).get('slug')
@@ -71,15 +73,9 @@ const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').repla
     }
 
     try {
-      let renderMarkdown = (content) => `<pre>${String(content || '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]))}</pre>`
-      try {
-        const markdown = await import('../../lib/markdown')
-        if (typeof markdown.renderMarkdown === 'function') {
-          renderMarkdown = markdown.renderMarkdown
-        }
-      } catch (e) {
-        console.warn('Markdown module load failed, using plain fallback.')
-      }
+      const renderMarkdown = typeof renderMarkdownRuntime === 'function'
+        ? renderMarkdownRuntime
+        : (content) => `<pre>${String(content || '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]))}</pre>`
 
       const res = await fetch(`${API}/api/articles/${encodeURIComponent(slug)}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)

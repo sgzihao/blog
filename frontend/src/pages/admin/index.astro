@@ -636,6 +636,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 
   // Preview toggle
   let previewMode = false
+  function renderMarkdownPreview(content: string) {
+    const escaped = String(content || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+    return `<pre>${escaped}</pre>`
+  }
+
   document.getElementById('preview-toggle')!.addEventListener('click', async () => {
     previewMode = !previewMode
     const textarea = document.getElementById('ed-content')!
@@ -644,8 +652,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 
     if (previewMode) {
       const content = (textarea as HTMLTextAreaElement).value
-      const { renderMarkdown } = await import('../../lib/markdown')
-      preview.innerHTML = renderMarkdown(content)
+      preview.innerHTML = renderMarkdownPreview(content)
       textarea.classList.add('hidden')
       preview.classList.remove('hidden')
       btn.textContent = 'Edit'
