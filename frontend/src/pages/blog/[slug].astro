@@ -6,6 +6,10 @@ import { renderMarkdown, extractToc } from '../../lib/markdown'
 
 const { slug } = Astro.params
 
+export async function getStaticPaths() {
+  return []
+}
+
 let article
 try {
   article = await getArticle(slug!)
@@ -35,7 +39,7 @@ const categories = splitComma(article.categories)
       <article class="flex-1 min-w-0">
         <!-- Breadcrumb -->
         <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8">
-          <a href="/" class="hover:text-slate-300 transition-colors">首页</a>
+          <a href="/" class="hover:text-slate-300 transition-colors">Home</a>
           <span>/</span>
           <a href="/blog" class="hover:text-slate-300 transition-colors">Blog</a>
           <span>/</span>
@@ -67,21 +71,21 @@ const categories = splitComma(article.categories)
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
-              发布于 {formatDate(article.created_at)}
+              Published {formatDate(article.created_at)}
             </time>
             {article.updated_at !== article.created_at && (
               <span class="flex items-center gap-1.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
-                更新于 {formatDate(article.updated_at)}
+                Updated {formatDate(article.updated_at)}
               </span>
             )}
             <span class="flex items-center gap-1.5">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
-              {article.view_count} 次阅读
+              {article.view_count} views
             </span>
           </div>
         </header>
@@ -108,13 +112,13 @@ const categories = splitComma(article.categories)
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            返回 Blog
+            Back to Blog
           </a>
           <a href={`/admin?edit=${article.slug}`} class="btn-ghost text-xs">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
-            编辑此文
+            Edit
           </a>
         </div>
       </article>
@@ -123,7 +127,7 @@ const categories = splitComma(article.categories)
       {toc.length > 0 && (
         <aside class="hidden xl:block w-56 flex-shrink-0">
           <div class="sticky top-24">
-            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">目录</h4>
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Contents</h4>
             <nav class="space-y-1" id="toc">
               {toc.map(item => (
                 <a 

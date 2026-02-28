@@ -6,6 +6,10 @@ import { renderMarkdown, extractToc } from '../../lib/markdown'
 
 const { slug } = Astro.params
 
+export async function getStaticPaths() {
+  return []
+}
+
 let article
 try {
   article = await getArticle(slug!)
@@ -28,7 +32,7 @@ const tags = splitComma(article.tags)
       <!-- Main -->
       <article class="flex-1 min-w-0">
         <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8">
-          <a href="/" class="hover:text-slate-300 transition-colors">首页</a>
+          <a href="/" class="hover:text-slate-300 transition-colors">Home</a>
           <span>/</span>
           <a href="/wiki" class="hover:text-slate-300 transition-colors">Wiki</a>
           <span>/</span>
@@ -43,12 +47,12 @@ const tags = splitComma(article.tags)
             {article.title}
           </h1>
           <div class="flex flex-wrap items-center gap-5 text-sm text-slate-400">
-            <time>最后更新：{formatDate(article.updated_at)}</time>
+            <time>Last updated: {formatDate(article.updated_at)}</time>
             <span class="flex items-center gap-1.5">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
-              {article.view_count} 次查看
+              {article.view_count} views
             </span>
           </div>
         </header>
@@ -70,13 +74,13 @@ const tags = splitComma(article.tags)
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            返回 Wiki
+            Back to Wiki
           </a>
           <a href={`/admin?edit=${article.slug}`} class="btn-ghost text-xs">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
-            编辑
+            Edit
           </a>
         </div>
       </article>
@@ -85,7 +89,7 @@ const tags = splitComma(article.tags)
       {toc.length > 0 && (
         <aside class="hidden xl:block w-56 flex-shrink-0">
           <div class="sticky top-24">
-            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">目录</h4>
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Contents</h4>
             <nav class="space-y-1">
               {toc.map(item => (
                 <a 

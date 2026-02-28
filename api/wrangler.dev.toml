@@ -10,7 +10,7 @@ database_id = "local-dev-db-00000000-0000-0000-0000-000000000000"
 
 [vars]
 ALLOWED_ORIGIN = "http://localhost:4321"
-ADMIN_TOKEN = "dev-token-123"
+ADMIN_TOKEN = "tb-1a5e896126b5bddbda8d10acefed2bea"
 
 [dev]
 port = 8787

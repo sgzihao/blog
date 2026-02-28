@@ -14,9 +14,35 @@ const app = new Hono<{ Bindings: Bindings }>()
 app.use('*', logger())
 
 app.use('*', async (c, next) => {
-  const origin = c.env.ALLOWED_ORIGIN || '*'
+  const configuredOrigins = (c.env.ALLOWED_ORIGIN || '*')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
+
+  const allowAll = configuredOrigins.includes('*')
+  const allowedOrigins = Array.from(new Set([
+    ...configuredOrigins,
+    'http://localhost:4321',
+    'http://localhost:3000',
+  ]))
+
+  const isAllowedOrigin = (origin: string) => {
+    if (allowAll) return true
+    return allowedOrigins.some((allowed) => {
+      if (!allowed.includes('*')) return origin === allowed
+      const pattern = allowed
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*')
+      return new RegExp(`^${pattern}$`).test(origin)
+    })
+  }
+
   return cors({
-    origin: [origin, 'http://localhost:4321', 'http://localhost:3000'],
+    origin: (origin) => {
+      if (allowAll) return '*'
+      if (!origin) return ''
+      return isAllowedOrigin(origin) ? origin : ''
+    },
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400,

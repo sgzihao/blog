@@ -1,16 +1,16 @@
 ---
 // src/pages/wiki/index.astro
 import SiteLayout from '../../layouts/SiteLayout.astro'
-import { getArticles, getCategories, getTags } from '../../lib/api'
+import { getArticlesSafe, getCategoriesSafe, getTagsSafe } from '../../lib/api'
 
 const { searchParams } = Astro.url
 const tag = searchParams.get('tag') || undefined
 const category = searchParams.get('category') || undefined
 
 const [articlesResult, categories, tags] = await Promise.all([
-  getArticles({ type: 'wiki', limit: 50, tag, category }),
-  getCategories(),
-  getTags(),
+  getArticlesSafe({ type: 'wiki', limit: 50, tag, category }),
+  getCategoriesSafe(),
+  getTagsSafe(),
 ])
 
 // Group wiki articles by category
@@ -18,8 +18,8 @@ const articles = articlesResult.results
 const grouped: Record<string, typeof articles> = {}
 
 for (const article of articles) {
-  const cats = article.categories?.split(',') || ['未分类']
-  const cat = cats[0]?.trim() || '未分类'
+  const cats = article.categories?.split(',') || ['Uncategorized']
+  const cat = cats[0]?.trim() || 'Uncategorized'
   if (!grouped[cat]) grouped[cat] = []
   grouped[cat].push(article)
 }
@@ -31,14 +31,14 @@ for (const article of articles) {
     <div class="mb-10">
       <div class="flex items-center gap-3 mb-2">
         <h1 class="text-3xl font-display font-bold text-white">Wiki</h1>
-        <span class="badge-wiki">知识库</span>
+        <span class="badge-wiki">Knowledge Base</span>
       </div>
-      <p class="text-slate-400">系统整理的技术笔记，方便查阅和学习</p>
+      <p class="text-slate-400">Structured technical notes for quick reference and learning.</p>
     </div>
 
     <!-- Search + Filters -->
     <div class="flex flex-wrap gap-2 mb-8">
-      <a href="/wiki" class={`tag ${!tag && !category ? 'tag-active' : ''}`}>全部</a>
+      <a href="/wiki" class={`tag ${!tag && !category ? 'tag-active' : ''}`}>All</a>
       {tags.filter(t => t.count > 0).slice(0, 10).map(t => (
         <a href={`/wiki?tag=${t.slug}`} class={`tag ${tag === t.slug ? 'tag-active' : ''}`}>
           #{t.name}
@@ -58,7 +58,7 @@ for (const article of articles) {
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {catArticles.map(article => (
                 <a 
-                  href={`/wiki/${article.slug}`}
+                  href={`/wiki/post?slug=${encodeURIComponent(article.slug)}`}
                   class="card group p-4 flex items-start gap-3 hover:border-accent-purple/30 transition-all"
                 >
                   <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/20 transition-colors">
@@ -83,8 +83,8 @@ for (const article of articles) {
     ) : (
       <div class="text-center py-20 text-slate-500">
         <div class="text-5xl mb-4">📚</div>
-        <p class="text-lg font-medium text-slate-400 mb-2">暂无 Wiki 笔记</p>
-        <a href="/admin" class="text-accent-cyan hover:text-cyan-300">去添加第一篇</a>
+        <p class="text-lg font-medium text-slate-400 mb-2">No wiki notes yet</p>
+        <a href="/admin" class="text-accent-cyan hover:text-cyan-300">Add your first one</a>
       </div>
     )}
   </div>

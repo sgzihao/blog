@@ -39,11 +39,11 @@ uploadRoutes.post('/upload/image', authMiddleware, async (c) => {
   if (!file) return c.json({ error: 'No file provided' }, 400)
 
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    return c.json({ error: `不支持的文件类型：${file.type}` }, 400)
+    return c.json({ error: `Unsupported file type: ${file.type}` }, 400)
   }
 
   if (file.size > MAX_SIZE) {
-    return c.json({ error: `文件过大，最大 ${MAX_SIZE / 1024 / 1024}MB` }, 400)
+    return c.json({ error: `File too large. Max ${MAX_SIZE / 1024 / 1024}MB` }, 400)
   }
 
   try {

@@ -10,7 +10,8 @@ interface Props {
 
 const { article, class: className = '' } = Astro.props
 const tags = splitComma(article.tags)
-const basePath = article.type === 'blog' ? '/blog' : '/wiki'
+const basePath = article.type === 'blog' ? '/blog/post' : '/wiki/post'
+const detailUrl = `${basePath}?slug=${encodeURIComponent(article.slug)}`
 ---
 
 <article class={`card-glow group animate-in ${className}`}>
@@ -36,7 +37,7 @@ const basePath = article.type === 'blog' ? '/blog' : '/wiki'
 
     <!-- Title -->
     <h2 class="text-lg font-display font-semibold text-white mb-2 leading-snug group-hover:text-accent-cyan transition-colors line-clamp-2">
-      <a href={`${basePath}/${article.slug}`} class="hover:no-underline">
+      <a href={detailUrl} class="hover:no-underline">
         {article.title}
       </a>
     </h2>
@@ -64,8 +65,8 @@ const basePath = article.type === 'blog' ? '/blog' : '/wiki'
 
     <!-- Footer -->
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-surface-700">
-      <a href={`${basePath}/${article.slug}`} class="text-accent-cyan text-sm font-medium hover:text-cyan-300 transition-colors flex items-center gap-1 group/link">
-        阅读全文
+      <a href={detailUrl} class="text-accent-cyan text-sm font-medium hover:text-cyan-300 transition-colors flex items-center gap-1 group/link">
+        Read More
         <svg class="w-4 h-4 group-hover/link:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>

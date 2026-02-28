@@ -1,0 +1,116 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro'
+
+const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').replace(/\/+$/, '')
+---
+
+<SiteLayout title="Wiki Note">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <article class="min-w-0">
+      <div id="runtime-config" data-api-url={apiUrl} class="hidden"></div>
+      <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8">
+        <a href="/" class="hover:text-slate-300 transition-colors">Home</a>
+        <span>/</span>
+        <a href="/wiki" class="hover:text-slate-300 transition-colors">Wiki</a>
+        <span>/</span>
+        <span id="breadcrumb-title" class="text-slate-400 truncate">Loading...</span>
+      </nav>
+
+      <div id="error-box" class="hidden card p-6 text-center text-slate-400"></div>
+
+      <div id="article-shell" class="hidden">
+        <header class="mb-10">
+          <span class="badge-wiki">📚 Wiki</span>
+          <h1 id="article-title" class="text-3xl sm:text-4xl font-display font-bold text-white leading-tight my-5"></h1>
+          <div class="text-sm text-slate-400">
+            <span id="updated-at"></span>
+            <span class="ml-4" id="view-count"></span>
+          </div>
+        </header>
+
+        <div id="article-content" class="prose-custom"></div>
+
+        <div id="tag-wrap" class="hidden mt-10 pt-8 border-t border-surface-700">
+          <div id="tag-list" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+    </article>
+  </div>
+</SiteLayout>
+
+<script type="module">
+  const runtimeConfig = document.getElementById('runtime-config')
+  const API = (runtimeConfig?.getAttribute('data-api-url') || 'http://localhost:8787').replace(/\/+$/, '')
+  const slug = new URLSearchParams(window.location.search).get('slug')
+
+  const errorBox = document.getElementById('error-box')
+  const articleShell = document.getElementById('article-shell')
+
+  function showError(msg) {
+    errorBox.textContent = msg
+    errorBox.classList.remove('hidden')
+    articleShell.classList.add('hidden')
+  }
+
+  function splitComma(str) {
+    return str ? str.split(',').map((s) => s.trim()).filter(Boolean) : []
+  }
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  async function load() {
+    if (!slug) {
+      showError('Missing slug in URL.')
+      return
+    }
+
+    try {
+      let renderMarkdown = (content) => `<pre>${String(content || '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]))}</pre>`
+      try {
+        const markdown = await import('../../lib/markdown')
+        if (typeof markdown.renderMarkdown === 'function') {
+          renderMarkdown = markdown.renderMarkdown
+        }
+      } catch (e) {
+        console.warn('Markdown module load failed, using plain fallback.')
+      }
+
+      const res = await fetch(`${API}/api/articles/${encodeURIComponent(slug)}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const article = await res.json()
+
+      if (article.status !== 'published' || article.type !== 'wiki') {
+        showError('Article not found.')
+        return
+      }
+
+      document.title = `${article.title} | Wiki`
+      document.getElementById('breadcrumb-title').textContent = article.title
+      document.getElementById('article-title').textContent = article.title
+      document.getElementById('updated-at').textContent = `Last updated: ${formatDate(article.updated_at || article.created_at)}`
+      document.getElementById('view-count').textContent = `${article.view_count ?? 0} views`
+
+      document.getElementById('article-content').innerHTML = renderMarkdown(article.content || '')
+
+      const tags = splitComma(article.tags)
+      if (tags.length > 0) {
+        document.getElementById('tag-wrap').classList.remove('hidden')
+        document.getElementById('tag-list').innerHTML = tags
+          .map((tag) => `<a href=\"/wiki?tag=${encodeURIComponent(tag)}\" class=\"tag\">#${tag}</a>`)
+          .join('')
+      }
+
+      articleShell.classList.remove('hidden')
+    } catch (e) {
+      showError('Failed to load article.')
+    }
+  }
+
+  load()
+</script>

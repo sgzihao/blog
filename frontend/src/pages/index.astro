@@ -2,17 +2,19 @@
 // src/pages/index.astro
 import SiteLayout from '../layouts/SiteLayout.astro'
 import ArticleCard from '../components/ArticleCard.astro'
-import { getArticles, getCategories, getTags } from '../lib/api'
+import { getArticlesSafe, getCategoriesSafe, getTagsSafe } from '../lib/api'
+const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').replace(/\/+$/, '')
 
 const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
-  getArticles({ type: 'blog', limit: 6 }),
-  getArticles({ type: 'wiki', limit: 4 }),
-  getCategories(),
-  getTags(),
+  getArticlesSafe({ type: 'blog', limit: 6 }),
+  getArticlesSafe({ type: 'wiki', limit: 4 }),
+  getCategoriesSafe(),
+  getTagsSafe(),
 ])
 ---
 
 <SiteLayout>
+  <div id="runtime-config" data-api-url={apiUrl} class="hidden"></div>
   <!-- Hero Section -->
   <section class="relative max-w-6xl mx-auto px-4 sm:px-6 pt-20 pb-16">
     <!-- Background glow -->
@@ -28,13 +30,13 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
       </div>
 
       <h1 class="text-4xl sm:text-5xl font-display font-bold text-white mb-4 animate-in stagger-1">
-        AI & 科技
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-purple"> 知识库</span>
+        AI & 科技笔记
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-purple"></span>
       </h1>
 
       <p class="text-slate-400 text-lg max-w-xl mx-auto mb-8 leading-relaxed animate-in stagger-2">
-        记录对人工智能、大语言模型和前沿科技的思考与探索。<br/>
-        分享技术心得，整理系统笔记。
+        AI ideas, product features, and technical experiments in one place.<br/>
+        Production-ready posts, notes, and feature documentation.
       </p>
 
       <div class="flex items-center justify-center gap-3 animate-in stagger-3">
@@ -42,19 +44,19 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
           </svg>
-          读 Blog
+          Read Blog
         </a>
         <a href="/wiki" class="btn-secondary">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          查 Wiki
+          Browse Wiki
         </a>
         <a href="/search" class="btn-secondary">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          搜索
+          Search
         </a>
       </div>
     </div>
@@ -62,13 +64,13 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-14 animate-in stagger-4">
       {[
-        { label: 'Blog 文章', value: latestBlogs.total, icon: '📝' },
-        { label: 'Wiki 笔记', value: latestWikis.total, icon: '📚' },
-        { label: '知识标签', value: tags.length, icon: '🏷️' },
+        { label: 'Blog Posts', value: latestBlogs.total, icon: '📝' },
+        { label: 'Wiki Notes', value: latestWikis.total, icon: '📚' },
+        { label: 'Tags', value: tags.length, icon: '🏷️' },
       ].map(stat => (
         <div class="text-center p-4 rounded-xl bg-surface-800 border border-surface-700">
           <div class="text-2xl mb-1">{stat.icon}</div>
-          <div class="text-2xl font-display font-bold text-white">{stat.value}</div>
+          <div class="text-2xl font-display font-bold text-white" id={stat.label === 'Blog Posts' ? 'stat-blog-total' : stat.label === 'Wiki Notes' ? 'stat-wiki-total' : 'stat-tag-total'}>{stat.value}</div>
           <div class="text-xs text-slate-500 mt-0.5">{stat.label}</div>
         </div>
       ))}
@@ -79,7 +81,7 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
   {categories.length > 0 && (
     <section class="max-w-6xl mx-auto px-4 sm:px-6 mb-16">
       <div class="flex items-center gap-3 mb-6">
-        <h2 class="text-lg font-display font-semibold text-white">分类浏览</h2>
+        <h2 class="text-lg font-display font-semibold text-white">Browse by Category</h2>
         <div class="flex-1 h-px bg-surface-700"></div>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -101,26 +103,26 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
   <section class="max-w-6xl mx-auto px-4 sm:px-6 mb-16">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <h2 class="text-lg font-display font-semibold text-white">最新 Blog</h2>
+        <h2 class="text-lg font-display font-semibold text-white">Latest Blog</h2>
         <span class="badge-blog">Blog</span>
       </div>
       <a href="/blog" class="text-accent-cyan text-sm hover:text-cyan-300 transition-colors flex items-center gap-1">
-        查看全部
+        View All
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
       </a>
     </div>
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div id="latest-blog-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {latestBlogs.results.map((article, i) => (
         <ArticleCard article={article} class={`stagger-${Math.min(i+1, 5)}`} />
       ))}
     </div>
 
     {latestBlogs.results.length === 0 && (
-      <div class="text-center py-16 text-slate-500">
-        暂无文章，<a href="/admin" class="text-accent-cyan hover:text-cyan-300">去写一篇吧</a>
+      <div id="latest-blog-empty" class="text-center py-16 text-slate-500">
+        No posts yet. <a href="/admin" class="text-accent-cyan hover:text-cyan-300">Create one in admin</a>
       </div>
     )}
   </section>
@@ -130,11 +132,11 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
     <section class="max-w-6xl mx-auto px-4 sm:px-6 mb-16">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-          <h2 class="text-lg font-display font-semibold text-white">Wiki 笔记</h2>
+          <h2 class="text-lg font-display font-semibold text-white">Wiki Notes</h2>
           <span class="badge-wiki">Wiki</span>
         </div>
         <a href="/wiki" class="text-accent-cyan text-sm hover:text-cyan-300 transition-colors flex items-center gap-1">
-          查看全部
+          View All
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
@@ -146,7 +148,7 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
           <article class={`card-glow p-5 animate-in stagger-${i+1}`}>
             <span class="badge-wiki text-xs mb-3 block w-fit">Wiki</span>
             <h3 class="font-semibold text-white text-sm mb-2 leading-snug">
-              <a href={`/wiki/${article.slug}`} class="hover:text-accent-cyan transition-colors">
+              <a href={`/wiki/post?slug=${encodeURIComponent(article.slug)}`} class="hover:text-accent-cyan transition-colors">
                 {article.title}
               </a>
             </h3>
@@ -163,7 +165,7 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
   {tags.length > 0 && (
     <section class="max-w-6xl mx-auto px-4 sm:px-6 mb-16">
       <div class="flex items-center gap-3 mb-6">
-        <h2 class="text-lg font-display font-semibold text-white">热门标签</h2>
+        <h2 class="text-lg font-display font-semibold text-white">Popular Tags</h2>
         <div class="flex-1 h-px bg-surface-700"></div>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -177,3 +179,84 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
     </section>
   )}
 </SiteLayout>
+
+<script type="module">
+  const runtimeConfig = document.getElementById('runtime-config')
+  const API = (runtimeConfig?.getAttribute('data-api-url') || 'http://localhost:8787').replace(/\/+$/, '')
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))
+  }
+
+  function renderBlogCard(article, index) {
+    const detailUrl = `/blog/post?slug=${encodeURIComponent(article.slug)}`
+    const tags = (article.tags || '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, 3)
+    const tagsHtml = tags.map((tag) => `<span class="px-2 py-0.5 rounded-md bg-surface-700 text-slate-400 text-xs border border-surface-600">#${escapeHtml(tag)}</span>`).join('')
+
+    return `
+      <article class="card-glow group animate-in stagger-${Math.min(index + 1, 5)}">
+        ${article.cover_image ? `
+        <div class="aspect-video overflow-hidden">
+          <img src="${escapeHtml(article.cover_image)}" alt="${escapeHtml(article.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+        </div>` : ''}
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="badge-blog">📝 Blog</span>
+            <time class="text-slate-500 text-xs">${formatDate(article.created_at)}</time>
+          </div>
+          <h2 class="text-lg font-display font-semibold text-white mb-2 leading-snug group-hover:text-accent-cyan transition-colors line-clamp-2">
+            <a href="${detailUrl}" class="hover:no-underline">${escapeHtml(article.title)}</a>
+          </h2>
+          ${article.excerpt ? `<p class="text-slate-400 text-sm leading-6 mb-4 line-clamp-2">${escapeHtml(article.excerpt)}</p>` : ''}
+          ${tagsHtml ? `<div class="flex flex-wrap gap-1.5">${tagsHtml}</div>` : ''}
+          <div class="flex items-center justify-between mt-4 pt-4 border-t border-surface-700">
+            <a href="${detailUrl}" class="text-accent-cyan text-sm font-medium hover:text-cyan-300 transition-colors flex items-center gap-1">Read More</a>
+            <span class="text-slate-600 text-xs">${article.view_count ?? 0}</span>
+          </div>
+        </div>
+      </article>
+    `
+  }
+
+  async function refreshHome() {
+    try {
+      const [blogData, wikiData, tagData] = await Promise.all([
+        fetch(`${API}/api/articles?type=blog&limit=6`).then((r) => r.json()),
+        fetch(`${API}/api/articles?type=wiki&limit=1`).then((r) => r.json()),
+        fetch(`${API}/api/tags`).then((r) => r.json()),
+      ])
+
+      const statBlog = document.getElementById('stat-blog-total')
+      const statWiki = document.getElementById('stat-wiki-total')
+      const statTag = document.getElementById('stat-tag-total')
+      if (statBlog) statBlog.textContent = String(blogData.total ?? 0)
+      if (statWiki) statWiki.textContent = String(wikiData.total ?? 0)
+      if (statTag) statTag.textContent = String((tagData || []).length)
+
+      const grid = document.getElementById('latest-blog-grid')
+      const empty = document.getElementById('latest-blog-empty')
+      if (!grid) return
+
+      const results = Array.isArray(blogData.results) ? blogData.results : []
+      if (results.length === 0) {
+        if (empty) empty.classList.remove('hidden')
+        return
+      }
+
+      grid.innerHTML = results.map((article, i) => renderBlogCard(article, i)).join('')
+      if (empty) empty.classList.add('hidden')
+    } catch (e) {
+      console.warn('Failed to refresh home data from API.')
+    }
+  }
+
+  refreshHome()
+</script>

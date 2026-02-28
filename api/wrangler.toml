@@ -11,7 +11,8 @@ database_id = "5a3dfe2f-2fb9-4cc2-bac5-6192df2d349b"
 
 [vars]
 # 允许的前端域名（CORS）
-ALLOWED_ORIGIN = "https://72ecf5cf.techblog-2on.pages.dev"
+# 支持逗号分隔多个域名；支持 * 通配；不要加末尾 /
+ALLOWED_ORIGIN = "https://techblog-94z.pages.dev,https://*.techblog-94z.pages.dev"
 
 # ADMIN_TOKEN 通过 `wrangler secret put ADMIN_TOKEN` 设置，不要写在这里
 

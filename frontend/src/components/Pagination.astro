@@ -16,7 +16,7 @@ function getPageUrl(p: number) {
   return url.pathname + url.search
 }
 
-// 在 frontmatter 中预计算分页数字列表（含省略号），避免模板中使用复杂表达式
+// Pre-calculate pagination items (with ellipses) in frontmatter.
 const pageItems: (number | 'ellipsis')[] = []
 const filtered = Array.from({ length: totalPages }, (_, i) => i + 1)
   .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
@@ -37,14 +37,14 @@ for (let i = 0; i < filtered.length; i++) {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
-        上一页
+        Previous
       </a>
     ) : (
       <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
-        上一页
+        Previous
       </button>
     )}
 
@@ -71,14 +71,14 @@ for (let i = 0; i < filtered.length; i++) {
     <!-- Next -->
     {page < totalPages ? (
       <a href={getPageUrl(page + 1)} class="btn-secondary px-4 py-2">
-        下一页
+        Next
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
       </a>
     ) : (
       <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>
-        下一页
+        Next
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>

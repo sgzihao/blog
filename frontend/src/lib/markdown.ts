@@ -33,9 +33,16 @@ renderer.image = ({ href, title, text }) => {
 }
 
 // 标题添加 ID（用于锚点导航）
-renderer.heading = ({ text, depth }) => {
-  const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fff\-]/g, '-').replace(/-+/g, '-')
-  return `<h${depth} id="${id}">${text}</h${depth}>`
+renderer.heading = (token: any) => {
+  const depth = typeof token?.depth === 'number' ? token.depth : 2
+  const headingText = String(token?.text ?? token?.raw ?? '').replace(/^#+\s*/, '').trim()
+  const id = headingText
+    .toLowerCase()
+    .replace(/[^\w\u4e00-\u9fff\-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  const safeId = id || 'section'
+  return `<h${depth} id="${safeId}">${headingText}</h${depth}>`
 }
 
 marked.use({ renderer })

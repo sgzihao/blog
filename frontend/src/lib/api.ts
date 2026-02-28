@@ -1,6 +1,21 @@
-// src/lib/api.ts - API 客户端工具
+// src/lib/api.ts - API client utilities
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787'
+function normalizeApiUrl(rawUrl?: string): string {
+  const value = (rawUrl || '').trim()
+  if (!value) return 'http://localhost:8787'
+
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    return value.replace(/\/+$/, '')
+  }
+
+  if (value.startsWith('localhost') || value.startsWith('127.0.0.1')) {
+    return `http://${value}`.replace(/\/+$/, '')
+  }
+
+  return `https://${value}`.replace(/\/+$/, '')
+}
+
+const API_URL = normalizeApiUrl(import.meta.env.PUBLIC_API_URL)
 
 export interface Article {
   id: number
@@ -55,7 +70,7 @@ export interface SearchResult {
   highlight?: string
 }
 
-// ==================== 公开接口 ====================
+// ==================== Public APIs ====================
 
 export async function getArticles(params: {
   type?: 'blog' | 'wiki'
@@ -101,7 +116,48 @@ export async function getTags(): Promise<Tag[]> {
   return res.json()
 }
 
-// ==================== 管理接口 ====================
+// Build-safe wrappers for public pages. If API is temporarily unavailable
+// during static generation, fall back to empty content instead of failing build.
+export async function getArticlesSafe(params: {
+  type?: 'blog' | 'wiki'
+  category?: string
+  tag?: string
+  page?: number
+  limit?: number
+  status?: string
+}): Promise<PaginatedResult<Article>> {
+  try {
+    return await getArticles(params)
+  } catch (err) {
+    console.warn('[api] getArticlesSafe fallback:', err)
+    return {
+      results: [],
+      total: 0,
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+    }
+  }
+}
+
+export async function getCategoriesSafe(): Promise<Category[]> {
+  try {
+    return await getCategories()
+  } catch (err) {
+    console.warn('[api] getCategoriesSafe fallback:', err)
+    return []
+  }
+}
+
+export async function getTagsSafe(): Promise<Tag[]> {
+  try {
+    return await getTags()
+  } catch (err) {
+    console.warn('[api] getTagsSafe fallback:', err)
+    return []
+  }
+}
+
+// ==================== Admin APIs ====================
 
 function adminHeaders(token: string) {
   return {
@@ -197,15 +253,15 @@ export async function uploadImage(token: string, file: File): Promise<{ url: str
     throw new Error(err.error || 'Upload failed')
   }
   const data = await res.json() as { url: string, id: number }
-  // 将相对路径转为绝对路径（让图片在前端可以正常显示）
+  // Convert relative upload paths into absolute URLs for rendering.
   const absoluteUrl = data.url.startsWith('http') ? data.url : `${API_URL}${data.url}`
   return { ...data, url: absoluteUrl }
 }
 
-// ==================== 工具函数 ====================
+// ==================== Utility Functions ====================
 
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('zh-CN', {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -213,7 +269,7 @@ export function formatDate(dateStr: string): string {
 }
 
 export function formatDateShort(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('zh-CN', {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

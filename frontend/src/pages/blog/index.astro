@@ -3,7 +3,7 @@
 import SiteLayout from '../../layouts/SiteLayout.astro'
 import ArticleCard from '../../components/ArticleCard.astro'
 import Pagination from '../../components/Pagination.astro'
-import { getArticles, getCategories, getTags } from '../../lib/api'
+import { getArticlesSafe, getCategoriesSafe, getTagsSafe } from '../../lib/api'
 
 const { searchParams, pathname } = Astro.url
 const page = parseInt(searchParams.get('page') || '1')
@@ -12,9 +12,9 @@ const tag = searchParams.get('tag') || undefined
 const limit = 9
 
 const [articlesResult, categories, tags] = await Promise.all([
-  getArticles({ type: 'blog', page, limit, category, tag }),
-  getCategories(),
-  getTags(),
+  getArticlesSafe({ type: 'blog', page, limit, category, tag }),
+  getCategoriesSafe(),
+  getTagsSafe(),
 ])
 ---
 
@@ -24,9 +24,9 @@ const [articlesResult, categories, tags] = await Promise.all([
     <div class="mb-10">
       <div class="flex items-center gap-3 mb-2">
         <h1 class="text-3xl font-display font-bold text-white">Blog</h1>
-        <span class="badge-blog">文章</span>
+        <span class="badge-blog">Posts</span>
       </div>
-      <p class="text-slate-400">分享 AI 与科技的原创思考与技术心得</p>
+      <p class="text-slate-400">Original writing on AI and technology.</p>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-10">
@@ -34,13 +34,13 @@ const [articlesResult, categories, tags] = await Promise.all([
       <aside class="lg:w-56 flex-shrink-0">
         <!-- Filter by Category -->
         <div class="mb-6">
-          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">分类</h3>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Categories</h3>
           <div class="space-y-1">
             <a 
               href="/blog"
               class={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${!category ? 'bg-surface-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700/50'}`}
             >
-              <span>全部</span>
+              <span>All</span>
               <span class="text-slate-600 text-xs">{articlesResult.total}</span>
             </a>
             {categories.map(cat => (
@@ -60,7 +60,7 @@ const [articlesResult, categories, tags] = await Promise.all([
 
         <!-- Tags -->
         <div>
-          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">标签</h3>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Tags</h3>
           <div class="flex flex-wrap gap-1.5">
             {tags.slice(0, 15).map(t => (
               <a 
@@ -79,14 +79,14 @@ const [articlesResult, categories, tags] = await Promise.all([
         {/* Active filters */}
         {(category || tag) && (
           <div class="flex items-center gap-2 mb-6 text-sm">
-            <span class="text-slate-400">筛选：</span>
+            <span class="text-slate-400">Filters:</span>
             {category && <span class="px-2.5 py-1 rounded-full bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20">{categories.find(c => c.slug === category)?.name || category}</span>}
             {tag && <span class="px-2.5 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20">#{tags.find(t => t.slug === tag)?.name || tag}</span>}
             <a href="/blog" class="text-slate-500 hover:text-slate-300 flex items-center gap-1">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
-              清除
+              Clear
             </a>
           </div>
         )}
@@ -108,8 +108,8 @@ const [articlesResult, categories, tags] = await Promise.all([
         ) : (
           <div class="text-center py-20 text-slate-500">
             <div class="text-5xl mb-4">🔍</div>
-            <p class="text-lg font-medium text-slate-400 mb-2">暂无文章</p>
-            <p class="text-sm">尝试选择其他分类或标签</p>
+            <p class="text-lg font-medium text-slate-400 mb-2">No posts found</p>
+            <p class="text-sm">Try different categories or tags.</p>
           </div>
         )}
       </div>

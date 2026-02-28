@@ -18,11 +18,11 @@ if (q) {
 }
 ---
 
-<SiteLayout title={q ? `搜索"${q}"` : '搜索'}>
+<SiteLayout title={q ? `Search "${q}"` : 'Search'}>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-2xl font-display font-bold text-white mb-6">搜索</h1>
+      <h1 class="text-2xl font-display font-bold text-white mb-6">Search</h1>
 
       <!-- Search Form -->
       <form method="get" class="flex gap-2">
@@ -34,17 +34,17 @@ if (q) {
             type="text" 
             name="q" 
             value={q}
-            placeholder="搜索文章、Wiki..."
+            placeholder="Search blog posts and wiki notes..."
             class="input pl-11 text-base h-12"
             autofocus
           />
         </div>
         <select name="type" class="select w-28 h-12">
-          <option value="" selected={!type}>全部</option>
+          <option value="" selected={!type}>All</option>
           <option value="blog" selected={type === 'blog'}>Blog</option>
           <option value="wiki" selected={type === 'wiki'}>Wiki</option>
         </select>
-        <button type="submit" class="btn-primary h-12 px-6">搜索</button>
+        <button type="submit" class="btn-primary h-12 px-6">Search</button>
       </form>
     </div>
 
@@ -52,15 +52,15 @@ if (q) {
     {q && (
       <div>
         <div class="flex items-center gap-2 text-sm text-slate-500 mb-6">
-          <span>找到 <strong class="text-slate-300">{results.length}</strong> 个结果</span>
-          {searchTime > 0 && <span>· 耗时 {searchTime}ms</span>}
+          <span><strong class="text-slate-300">{results.length}</strong> results</span>
+          {searchTime > 0 && <span>· {searchTime}ms</span>}
           {q && <span class="text-accent-cyan">"{q}"</span>}
         </div>
 
         {results.length > 0 ? (
           <div class="space-y-4">
             {results.map(result => {
-              const basePath = result.type === 'blog' ? '/blog' : '/wiki'
+              const basePath = result.type === 'blog' ? '/blog/post' : '/wiki/post'
               return (
                 <article class="card p-5 hover:border-surface-500 transition-all group">
                   <div class="flex items-start gap-4">
@@ -83,7 +83,7 @@ if (q) {
                         <time class="text-slate-500 text-xs">{formatDate(result.created_at)}</time>
                       </div>
                       <h2 class="font-semibold text-white group-hover:text-accent-cyan transition-colors mb-2">
-                        <a href={`${basePath}/${result.slug}`}>{result.title}</a>
+                        <a href={`${basePath}?slug=${encodeURIComponent(result.slug)}`}>{result.title}</a>
                       </h2>
                       {result.highlight ? (
                         <p class="text-slate-400 text-sm leading-6 search-highlight" set:html={result.highlight} />
@@ -99,8 +99,8 @@ if (q) {
         ) : (
           <div class="text-center py-16">
             <div class="text-5xl mb-4">🔍</div>
-            <p class="text-lg font-medium text-slate-300 mb-2">没有找到相关内容</p>
-            <p class="text-slate-500 text-sm">试试其他关键词，或者搜索英文</p>
+            <p class="text-lg font-medium text-slate-300 mb-2">No results found</p>
+            <p class="text-slate-500 text-sm">Try different keywords.</p>
           </div>
         )}
       </div>
@@ -109,9 +109,9 @@ if (q) {
     {!q && (
       <div class="text-center py-16">
         <div class="text-5xl mb-4">✨</div>
-        <p class="text-slate-400">输入关键词开始搜索</p>
-        <p class="text-slate-600 text-sm mt-2">支持中文、标题、正文全文检索</p>
-        <p class="text-slate-600 text-sm mt-1">快捷键：<kbd class="px-1.5 py-0.5 bg-surface-700 rounded text-xs font-mono">⌘K</kbd></p>
+        <p class="text-slate-400">Type a keyword to start searching</p>
+        <p class="text-slate-600 text-sm mt-2">Searches titles and full article content.</p>
+        <p class="text-slate-600 text-sm mt-1">Shortcut: <kbd class="px-1.5 py-0.5 bg-surface-700 rounded text-xs font-mono">⌘K</kbd></p>
       </div>
     )}
   </div>
