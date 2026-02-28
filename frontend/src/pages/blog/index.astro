@@ -91,29 +91,26 @@ const [articlesResult, categories, tags] = await Promise.all([
           </a>
         </div>
 
-        {articlesResult.results.length > 0 ? (
-          <>
-            <div id="blog-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-              {articlesResult.results.map((article, i) => (
-                <ArticleCard article={article} class={`stagger-${Math.min(i+1, 5)}`} />
-              ))}
-            </div>
-            <div id="blog-pagination">
-              <Pagination 
-                page={page} 
-                total={articlesResult.total} 
-                limit={limit}
-                baseUrl={pathname + '?' + searchParams.toString()}
-              />
-            </div>
-          </>
-        ) : (
-          <div id="blog-empty" class="text-center py-20 text-slate-500">
-            <div class="text-5xl mb-4">🔍</div>
-            <p class="text-lg font-medium text-slate-400 mb-2">No posts found</p>
-            <p class="text-sm">Try different categories or tags.</p>
-          </div>
-        )}
+        <div id="blog-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+          {articlesResult.results.map((article, i) => (
+            <ArticleCard article={article} class={`stagger-${Math.min(i+1, 5)}`} />
+          ))}
+        </div>
+        <div id="blog-pagination">
+          {articlesResult.results.length > 0 && (
+            <Pagination 
+              page={page} 
+              total={articlesResult.total} 
+              limit={limit}
+              baseUrl={pathname + '?' + searchParams.toString()}
+            />
+          )}
+        </div>
+        <div id="blog-empty" class={`text-center py-20 text-slate-500 ${articlesResult.results.length > 0 ? 'hidden' : ''}`}>
+          <div class="text-5xl mb-4">🔍</div>
+          <p class="text-lg font-medium text-slate-400 mb-2">No posts found</p>
+          <p class="text-sm">Try different categories or tags.</p>
+        </div>
       </div>
     </div>
   </div>

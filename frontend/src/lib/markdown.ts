@@ -1,10 +1,10 @@
-// src/lib/markdown.ts - Markdown 渲染器（带代码高亮）
+// src/lib/markdown.ts - Markdown renderer with syntax highlighting
 
 import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
 
-// 配置代码高亮
+// Configure syntax highlighting
 marked.use(
   markedHighlight({
     langPrefix: 'hljs language-',
@@ -15,10 +15,10 @@ marked.use(
   })
 )
 
-// 自定义渲染器
+// Custom renderer
 const renderer = new marked.Renderer()
 
-// 链接在新标签页打开（外部链接）
+// Open external links in a new tab
 renderer.link = ({ href, title, text }) => {
   const isExternal = href && (href.startsWith('http://') || href.startsWith('https://'))
   const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : ''
@@ -26,13 +26,13 @@ renderer.link = ({ href, title, text }) => {
   return `<a href="${href}"${titleAttr}${target}>${text}</a>`
 }
 
-// 图片懒加载
+// Enable image lazy loading
 renderer.image = ({ href, title, text }) => {
   const titleAttr = title ? ` title="${title}"` : ''
   return `<img src="${href}" alt="${text}"${titleAttr} loading="lazy" class="rounded-lg max-w-full" />`
 }
 
-// 标题添加 ID（用于锚点导航）
+// Add heading IDs for anchor navigation
 renderer.heading = (token: any) => {
   const depth = typeof token?.depth === 'number' ? token.depth : 2
   const headingText = String(token?.text ?? token?.raw ?? '').replace(/^#+\s*/, '').trim()
@@ -61,7 +61,7 @@ export function renderMarkdown(content: string): string {
   }
 }
 
-// 提取文章目录
+// Extract table of contents
 export function extractToc(content: string): Array<{ id: string; text: string; level: number }> {
   const headings: Array<{ id: string; text: string; level: number }> = []
   const regex = /^(#{1,3})\s+(.+)$/gm

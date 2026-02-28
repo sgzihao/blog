@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap'
 const enableSitemap = process.env.ENABLE_SITEMAP === 'true'
 
 export default defineConfig({
-  site: 'https://techblog-94z.pages.dev/', // 修改为你的实际域名
+  site: 'https://techblog-94z.pages.dev/', // Update to your actual domain
   output: 'static',
   integrations: [
     tailwind({ applyBaseStyles: false }),

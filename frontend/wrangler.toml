@@ -3,5 +3,5 @@ pages_build_output_dir = "./dist"
 
 [vars]
 PUBLIC_API_URL = "https://techblog-api.sgzihao.workers.dev"
-# 注意: ADMIN_TOKEN 因为在浏览器使用，仅建议个人使用
-# 如果想要更安全，在 Pages 的 Environment Variables 中设置
+# Note: ADMIN_TOKEN is used in the browser; suitable only for personal/small use.
+# For better security, set it in Cloudflare Pages Environment Variables.
