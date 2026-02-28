@@ -36,13 +36,15 @@ renderer.image = ({ href, title, text }) => {
 renderer.heading = (token: any) => {
   const depth = typeof token?.depth === 'number' ? token.depth : 2
   const headingText = String(token?.text ?? token?.raw ?? '').replace(/^#+\s*/, '').trim()
+  const headingHtml = token?.tokens ? (renderer.parser?.parseInline(token.tokens) || headingText) : headingText
   const id = headingText
     .toLowerCase()
-    .replace(/[^\w\u4e00-\u9fff\-]/g, '-')
+    .replace(/[^\w\u4e00-\u9fff\s\-]/g, '')
+    .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '')
   const safeId = id || 'section'
-  return `<h${depth} id="${safeId}">${headingText}</h${depth}>`
+  return `<h${depth} id="${safeId}" class="heading-with-anchor"><a class="heading-anchor" href="#${safeId}" aria-label="Link to this section">#</a>${headingHtml}</h${depth}>`
 }
 
 marked.use({ renderer })

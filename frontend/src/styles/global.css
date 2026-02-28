@@ -51,64 +51,93 @@
 /* ==================== Typography (Markdown) ==================== */
 @layer components {
   .prose-custom {
-    @apply text-slate-300 leading-7;
-
-    h1, h2, h3, h4, h5, h6 {
-      @apply text-white font-display font-semibold;
-      scroll-margin-top: 5rem;
-    }
-    h1 { @apply text-3xl mt-0 mb-6; }
-    h2 { @apply text-2xl mt-10 mb-4 pb-2 border-b border-surface-600; }
-    h3 { @apply text-xl mt-8 mb-3; }
-
-    p { @apply mb-5 leading-8; }
-
-    a {
-      @apply text-accent-cyan no-underline border-b border-accent-cyan/30 hover:border-accent-cyan transition-colors;
-    }
-
-    strong { @apply text-white font-semibold; }
-
-    code {
-      @apply text-cyan-300 bg-surface-700 px-1.5 py-0.5 rounded text-sm font-mono;
-    }
-
-    pre {
-      @apply bg-surface-800 rounded-xl p-5 overflow-x-auto border border-surface-600 my-6;
-      code {
-        @apply text-slate-200 bg-transparent p-0 text-sm;
-      }
-    }
-
-    blockquote {
-      @apply border-l-4 border-accent-cyan/50 pl-5 italic text-slate-400 my-6;
-    }
-
-    ul { @apply list-disc pl-6 mb-5 space-y-2; }
-    ol { @apply list-decimal pl-6 mb-5 space-y-2; }
-    li { @apply leading-7; }
-
-    table {
-      @apply w-full border-collapse my-6;
-      th {
-        @apply bg-surface-700 text-white font-semibold px-4 py-2 text-left border border-surface-600;
-      }
-      td {
-        @apply px-4 py-2 border border-surface-600;
-      }
-      tr:hover td {
-        @apply bg-surface-700/50;
-      }
-    }
-
-    img { @apply rounded-xl my-6 max-w-full; }
-
-    hr { @apply border-surface-600 my-8; }
-
-    mark {
-      @apply bg-accent-cyan/30 text-accent-cyan px-0.5 rounded;
-    }
+    @apply text-slate-300 leading-7 text-[16px];
   }
+
+  .prose-custom > :first-child { @apply mt-0; }
+  .prose-custom > :last-child { @apply mb-0; }
+
+  .prose-custom h1,
+  .prose-custom h2,
+  .prose-custom h3,
+  .prose-custom h4,
+  .prose-custom h5,
+  .prose-custom h6 {
+    @apply text-slate-100 font-semibold leading-tight;
+    scroll-margin-top: 5rem;
+  }
+  .prose-custom h1 { @apply text-[2em] mt-0 mb-4 pb-2 border-b border-surface-600; }
+  .prose-custom h2 { @apply text-[1.5em] mt-8 mb-4 pb-2 border-b border-surface-600; }
+  .prose-custom h3 { @apply text-[1.25em] mt-6 mb-3; }
+  .prose-custom h4 { @apply text-[1em] mt-6 mb-2; }
+
+  .prose-custom .heading-with-anchor {
+    @apply relative;
+  }
+  .prose-custom .heading-anchor {
+    @apply no-underline absolute -left-6 top-1/2 -translate-y-1/2 text-slate-500 opacity-0 transition-opacity;
+  }
+  .prose-custom .heading-with-anchor:hover .heading-anchor,
+  .prose-custom .heading-anchor:focus {
+    @apply opacity-100 text-cyan-300;
+  }
+
+  .prose-custom p { @apply mb-4 leading-7 text-slate-300; }
+
+  .prose-custom a {
+    @apply text-cyan-300 underline underline-offset-2 decoration-cyan-400/40 hover:decoration-cyan-300 hover:text-cyan-200 transition-colors;
+  }
+
+  .prose-custom strong { @apply text-slate-100 font-semibold; }
+  .prose-custom em { @apply text-slate-200 italic; }
+
+  .prose-custom code {
+    @apply text-slate-100 bg-surface-700/80 px-1.5 py-0.5 rounded-md text-[85%] font-mono border border-surface-600;
+  }
+
+  .prose-custom pre {
+    @apply bg-[#0d1117] rounded-md p-4 overflow-x-auto border border-[#30363d] my-4;
+  }
+  .prose-custom pre code {
+    @apply text-slate-200 bg-transparent p-0 text-[85%] leading-6 border-0 rounded-none;
+  }
+
+  .prose-custom blockquote {
+    @apply my-4 border-l-4 border-surface-500 pl-4 text-slate-400;
+  }
+  .prose-custom blockquote > :last-child { @apply mb-0; }
+
+  .prose-custom ul { @apply list-disc pl-6 mb-4; }
+  .prose-custom ol { @apply list-decimal pl-6 mb-4; }
+  .prose-custom li { @apply my-1 text-slate-300; }
+  .prose-custom li > ul,
+  .prose-custom li > ol { @apply mt-1 mb-0; }
+  .prose-custom li.task-list-item {
+    @apply list-none ml-0 pl-0;
+  }
+  .prose-custom li.task-list-item input[type='checkbox'] {
+    @apply mr-2 align-middle accent-cyan-500;
+  }
+  .prose-custom li.task-list-item p {
+    @apply inline m-0;
+  }
+
+  .prose-custom table {
+    @apply w-full border-collapse my-4 block overflow-x-auto;
+  }
+  .prose-custom th {
+    @apply bg-surface-800 text-slate-100 font-semibold px-3 py-2 text-left border border-surface-600;
+  }
+  .prose-custom td {
+    @apply px-3 py-2 border border-surface-600 text-slate-300;
+  }
+  .prose-custom tr:nth-child(2n) td {
+    @apply bg-surface-800/40;
+  }
+
+  .prose-custom img { @apply rounded-md my-4 max-w-full border border-surface-600; }
+  .prose-custom hr { @apply border-surface-600 my-6; }
+  .prose-custom mark { @apply bg-cyan-400/20 text-cyan-200 px-0.5 rounded; }
 
   /* ==================== Card Component ==================== */
   .card {
