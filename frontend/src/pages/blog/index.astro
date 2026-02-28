@@ -4,6 +4,7 @@ import SiteLayout from '../../layouts/SiteLayout.astro'
 import ArticleCard from '../../components/ArticleCard.astro'
 import Pagination from '../../components/Pagination.astro'
 import { getArticlesSafe, getCategoriesSafe, getTagsSafe } from '../../lib/api'
+const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').replace(/\/+$/, '')
 
 const { searchParams, pathname } = Astro.url
 const page = parseInt(searchParams.get('page') || '1')
@@ -19,6 +20,7 @@ const [articlesResult, categories, tags] = await Promise.all([
 ---
 
 <SiteLayout title="Blog">
+  <div id="runtime-config" data-api-url={apiUrl} class="hidden"></div>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
     <!-- Page Header -->
     <div class="mb-10">
@@ -35,13 +37,13 @@ const [articlesResult, categories, tags] = await Promise.all([
         <!-- Filter by Category -->
         <div class="mb-6">
           <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Categories</h3>
-          <div class="space-y-1">
+          <div id="blog-category-list" class="space-y-1">
             <a 
               href="/blog"
               class={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${!category ? 'bg-surface-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700/50'}`}
             >
               <span>All</span>
-              <span class="text-slate-600 text-xs">{articlesResult.total}</span>
+              <span id="blog-all-count" class="text-slate-600 text-xs">{articlesResult.total}</span>
             </a>
             {categories.map(cat => (
               <a 
@@ -61,7 +63,7 @@ const [articlesResult, categories, tags] = await Promise.all([
         <!-- Tags -->
         <div>
           <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Tags</h3>
-          <div class="flex flex-wrap gap-1.5">
+          <div id="blog-tag-list" class="flex flex-wrap gap-1.5">
             {tags.slice(0, 15).map(t => (
               <a 
                 href={`/blog?tag=${t.slug}`}
@@ -77,36 +79,36 @@ const [articlesResult, categories, tags] = await Promise.all([
       <!-- Article Grid -->
       <div class="flex-1 min-w-0">
         {/* Active filters */}
-        {(category || tag) && (
-          <div class="flex items-center gap-2 mb-6 text-sm">
-            <span class="text-slate-400">Filters:</span>
-            {category && <span class="px-2.5 py-1 rounded-full bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20">{categories.find(c => c.slug === category)?.name || category}</span>}
-            {tag && <span class="px-2.5 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20">#{tags.find(t => t.slug === tag)?.name || tag}</span>}
-            <a href="/blog" class="text-slate-500 hover:text-slate-300 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-              Clear
-            </a>
-          </div>
-        )}
+        <div id="active-filters" class={`flex items-center gap-2 mb-6 text-sm ${category || tag ? '' : 'hidden'}`}>
+          <span class="text-slate-400">Filters:</span>
+          <span id="active-category" class={`px-2.5 py-1 rounded-full bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 ${category ? '' : 'hidden'}`}>{categories.find(c => c.slug === category)?.name || category}</span>
+          <span id="active-tag" class={`px-2.5 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20 ${tag ? '' : 'hidden'}`}>#{tags.find(t => t.slug === tag)?.name || tag}</span>
+          <a href="/blog" class="text-slate-500 hover:text-slate-300 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Clear
+          </a>
+        </div>
 
         {articlesResult.results.length > 0 ? (
           <>
-            <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+            <div id="blog-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
               {articlesResult.results.map((article, i) => (
                 <ArticleCard article={article} class={`stagger-${Math.min(i+1, 5)}`} />
               ))}
             </div>
-            <Pagination 
-              page={page} 
-              total={articlesResult.total} 
-              limit={limit}
-              baseUrl={pathname + '?' + searchParams.toString()}
-            />
+            <div id="blog-pagination">
+              <Pagination 
+                page={page} 
+                total={articlesResult.total} 
+                limit={limit}
+                baseUrl={pathname + '?' + searchParams.toString()}
+              />
+            </div>
           </>
         ) : (
-          <div class="text-center py-20 text-slate-500">
+          <div id="blog-empty" class="text-center py-20 text-slate-500">
             <div class="text-5xl mb-4">🔍</div>
             <p class="text-lg font-medium text-slate-400 mb-2">No posts found</p>
             <p class="text-sm">Try different categories or tags.</p>
@@ -116,3 +118,209 @@ const [articlesResult, categories, tags] = await Promise.all([
     </div>
   </div>
 </SiteLayout>
+
+<script type="module">
+  const runtimeConfig = document.getElementById('runtime-config')
+  const API = (runtimeConfig?.getAttribute('data-api-url') || 'http://localhost:8787').replace(/\/+$/, '')
+  const LIMIT = 9
+
+  const grid = document.getElementById('blog-grid')
+  const empty = document.getElementById('blog-empty')
+  const pagination = document.getElementById('blog-pagination')
+  const activeFilters = document.getElementById('active-filters')
+  const activeCategory = document.getElementById('active-category')
+  const activeTag = document.getElementById('active-tag')
+  const categoryList = document.getElementById('blog-category-list')
+  const tagList = document.getElementById('blog-tag-list')
+
+  function splitComma(str) {
+    return str ? String(str).split(',').map((s) => s.trim()).filter(Boolean) : []
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))
+  }
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  function detailUrl(slug) {
+    return `/blog/post?slug=${encodeURIComponent(slug)}`
+  }
+
+  function renderCard(article, index) {
+    const tags = splitComma(article.tags).slice(0, 3)
+    const tagsHtml = tags.map((tag) => (
+      `<span class="px-2 py-0.5 rounded-md bg-surface-700 text-slate-400 text-xs border border-surface-600">#${escapeHtml(tag)}</span>`
+    )).join('')
+    const extraTags = splitComma(article.tags).length - tags.length
+
+    return `
+      <article class="card-glow group animate-in stagger-${Math.min(index + 1, 5)}">
+        ${article.cover_image ? `
+          <div class="aspect-video overflow-hidden">
+            <img src="${escapeHtml(article.cover_image)}" alt="${escapeHtml(article.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          </div>
+        ` : ''}
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="badge-blog">📝 Blog</span>
+            <time class="text-slate-500 text-xs">${formatDate(article.created_at)}</time>
+          </div>
+          <h2 class="text-lg font-display font-semibold text-white mb-2 leading-snug group-hover:text-accent-cyan transition-colors line-clamp-2">
+            <a href="${detailUrl(article.slug)}" class="hover:no-underline">${escapeHtml(article.title)}</a>
+          </h2>
+          ${article.excerpt ? `<p class="text-slate-400 text-sm leading-6 mb-4 line-clamp-2">${escapeHtml(article.excerpt)}</p>` : ''}
+          ${tagsHtml ? `<div class="flex flex-wrap gap-1.5">${tagsHtml}${extraTags > 0 ? `<span class="text-slate-500 text-xs self-center">+${extraTags}</span>` : ''}</div>` : ''}
+          <div class="flex items-center justify-between mt-4 pt-4 border-t border-surface-700">
+            <a href="${detailUrl(article.slug)}" class="text-accent-cyan text-sm font-medium hover:text-cyan-300 transition-colors flex items-center gap-1">
+              Read More
+            </a>
+            <span class="text-slate-600 text-xs">${article.view_count ?? 0}</span>
+          </div>
+        </div>
+      </article>
+    `
+  }
+
+  function getPageUrl(targetPage, currentParams) {
+    const params = new URLSearchParams(currentParams.toString())
+    if (targetPage <= 1) {
+      params.delete('page')
+    } else {
+      params.set('page', String(targetPage))
+    }
+    const query = params.toString()
+    return query ? `/blog?${query}` : '/blog'
+  }
+
+  function renderCategoryList(categories, currentCategory, total) {
+    if (!categoryList) return
+    categoryList.innerHTML = `
+      <a href="/blog" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${!currentCategory ? 'bg-surface-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700/50'}">
+        <span>All</span>
+        <span class="text-slate-600 text-xs">${total}</span>
+      </a>
+      ${categories.map((cat) => `
+        <a href="/blog?category=${encodeURIComponent(cat.slug)}" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${currentCategory === cat.slug ? 'bg-surface-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700/50'}">
+          <span class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${escapeHtml(cat.color || '#64748b')}"></span>
+            ${escapeHtml(cat.name)}
+          </span>
+          <span class="text-slate-600 text-xs">${Number(cat.count || 0)}</span>
+        </a>
+      `).join('')}
+    `
+  }
+
+  function renderTagList(tags, currentTag) {
+    if (!tagList) return
+    tagList.innerHTML = tags
+      .slice(0, 15)
+      .map((t) => `<a href="/blog?tag=${encodeURIComponent(t.slug)}" class="tag text-xs ${currentTag === t.slug ? 'tag-active' : ''}">#${escapeHtml(t.name)}</a>`)
+      .join('')
+  }
+
+  function renderPagination(page, total, limit, currentParams) {
+    const totalPages = Math.ceil((total || 0) / limit)
+    if (totalPages <= 1) return ''
+
+    const filtered = Array.from({ length: totalPages }, (_, i) => i + 1)
+      .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+    const items = []
+    for (let i = 0; i < filtered.length; i++) {
+      if (i > 0 && filtered[i] !== filtered[i - 1] + 1) items.push('ellipsis')
+      items.push(filtered[i])
+    }
+
+    return `
+      <div class="flex items-center justify-center gap-2 mt-12">
+        ${page > 1 ? `
+          <a href="${getPageUrl(page - 1, currentParams)}" class="btn-secondary px-4 py-2">Previous</a>
+        ` : `
+          <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>Previous</button>
+        `}
+        <div class="flex items-center gap-1">
+          ${items.map((item) => item === 'ellipsis'
+            ? '<span class="px-2 text-slate-500">…</span>'
+            : `<a href="${getPageUrl(item, currentParams)}" class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${item === page ? 'bg-accent-cyan text-slate-900 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700'}">${item}</a>`).join('')}
+        </div>
+        ${page < totalPages ? `
+          <a href="${getPageUrl(page + 1, currentParams)}" class="btn-secondary px-4 py-2">Next</a>
+        ` : `
+          <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>Next</button>
+        `}
+      </div>
+    `
+  }
+
+  async function hydrateBlogPage() {
+    const params = new URLSearchParams(window.location.search)
+    const page = Math.max(1, parseInt(params.get('page') || '1', 10) || 1)
+    const category = params.get('category') || ''
+    const tag = params.get('tag') || ''
+
+    const query = new URLSearchParams()
+    query.set('type', 'blog')
+    query.set('limit', String(LIMIT))
+    query.set('page', String(page))
+    if (category) query.set('category', category)
+    if (tag) query.set('tag', tag)
+
+    try {
+      const [res, categoriesRes, tagsRes] = await Promise.all([
+        fetch(`${API}/api/articles?${query}`),
+        fetch(`${API}/api/categories`),
+        fetch(`${API}/api/tags`),
+      ])
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      const categoriesData = categoriesRes.ok ? await categoriesRes.json() : []
+      const tagsData = tagsRes.ok ? await tagsRes.json() : []
+      const results = Array.isArray(data.results) ? data.results : []
+      const total = Number(data.total || 0)
+      const categories = Array.isArray(categoriesData) ? categoriesData : []
+      const tags = Array.isArray(tagsData) ? tagsData : []
+
+      renderCategoryList(categories, category, total)
+      renderTagList(tags, tag)
+
+      if (activeFilters) {
+        activeFilters.classList.toggle('hidden', !category && !tag)
+        if (activeCategory) {
+          const cat = categories.find((c) => c.slug === category)
+          activeCategory.textContent = cat ? cat.name : category
+          activeCategory.classList.toggle('hidden', !category)
+        }
+        if (activeTag) {
+          const t = tags.find((x) => x.slug === tag)
+          activeTag.textContent = tag ? `#${(t && t.name) || tag}` : ''
+          activeTag.classList.toggle('hidden', !tag)
+        }
+      }
+
+      if (results.length > 0) {
+        if (grid) {
+          grid.innerHTML = results.map((article, i) => renderCard(article, i)).join('')
+        }
+        if (empty) empty.classList.add('hidden')
+      } else {
+        if (grid) grid.innerHTML = ''
+        if (empty) empty.classList.remove('hidden')
+      }
+
+      if (pagination) {
+        pagination.innerHTML = renderPagination(page, total, LIMIT, params)
+      }
+    } catch (err) {
+      console.warn('Failed to load paginated blog data.', err)
+    }
+  }
+
+  hydrateBlogPage()
+</script>

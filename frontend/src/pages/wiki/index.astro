@@ -2,6 +2,7 @@
 // src/pages/wiki/index.astro
 import SiteLayout from '../../layouts/SiteLayout.astro'
 import { getArticlesSafe, getCategoriesSafe, getTagsSafe } from '../../lib/api'
+const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').replace(/\/+$/, '')
 
 const { searchParams } = Astro.url
 const tag = searchParams.get('tag') || undefined
@@ -26,6 +27,7 @@ for (const article of articles) {
 ---
 
 <SiteLayout title="Wiki">
+  <div id="runtime-config" data-api-url={apiUrl} class="hidden"></div>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
     <!-- Header -->
     <div class="mb-10">
@@ -37,7 +39,7 @@ for (const article of articles) {
     </div>
 
     <!-- Search + Filters -->
-    <div class="flex flex-wrap gap-2 mb-8">
+    <div id="wiki-tag-filters" class="flex flex-wrap gap-2 mb-8">
       <a href="/wiki" class={`tag ${!tag && !category ? 'tag-active' : ''}`}>All</a>
       {tags.filter(t => t.count > 0).slice(0, 10).map(t => (
         <a href={`/wiki?tag=${t.slug}`} class={`tag ${tag === t.slug ? 'tag-active' : ''}`}>
@@ -46,7 +48,8 @@ for (const article of articles) {
       ))}
     </div>
 
-    {articles.length > 0 ? (
+    <div id="wiki-content">
+      {articles.length > 0 ? (
       <div class="space-y-10">
         {Object.entries(grouped).map(([catName, catArticles]) => (
           <section>
@@ -87,5 +90,111 @@ for (const article of articles) {
         <a href="/admin" class="text-accent-cyan hover:text-cyan-300">Add your first one</a>
       </div>
     )}
+    </div>
   </div>
 </SiteLayout>
+
+<script type="module">
+  const runtimeConfig = document.getElementById('runtime-config')
+  const API = (runtimeConfig?.getAttribute('data-api-url') || 'http://localhost:8787').replace(/\/+$/, '')
+  const filtersEl = document.getElementById('wiki-tag-filters')
+  const contentEl = document.getElementById('wiki-content')
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))
+  }
+
+  function splitComma(str) {
+    return str ? String(str).split(',').map((s) => s.trim()).filter(Boolean) : []
+  }
+
+  function renderFilters(tags, currentTag, currentCategory) {
+    if (!filtersEl) return
+    filtersEl.innerHTML = `
+      <a href="/wiki" class="tag ${!currentTag && !currentCategory ? 'tag-active' : ''}">All</a>
+      ${tags.filter((t) => Number(t.count || 0) > 0).slice(0, 10).map((t) => (
+        `<a href="/wiki?tag=${encodeURIComponent(t.slug)}" class="tag ${currentTag === t.slug ? 'tag-active' : ''}">#${escapeHtml(t.name)}</a>`
+      )).join('')}
+    `
+  }
+
+  function renderContent(articles) {
+    if (!contentEl) return
+    if (!articles.length) {
+      contentEl.innerHTML = `
+        <div class="text-center py-20 text-slate-500">
+          <div class="text-5xl mb-4">📚</div>
+          <p class="text-lg font-medium text-slate-400 mb-2">No wiki notes yet</p>
+          <a href="/admin" class="text-accent-cyan hover:text-cyan-300">Add your first one</a>
+        </div>
+      `
+      return
+    }
+
+    const grouped = {}
+    for (const article of articles) {
+      const cats = splitComma(article.categories)
+      const cat = (cats[0] || 'Uncategorized').trim() || 'Uncategorized'
+      if (!grouped[cat]) grouped[cat] = []
+      grouped[cat].push(article)
+    }
+
+    contentEl.innerHTML = `
+      <div class="space-y-10">
+        ${Object.entries(grouped).map(([catName, catArticles]) => `
+          <section>
+            <div class="flex items-center gap-3 mb-4">
+              <h2 class="text-base font-semibold text-white">${escapeHtml(catName)}</h2>
+              <div class="flex-1 h-px bg-surface-700"></div>
+              <span class="text-slate-600 text-xs">${catArticles.length}</span>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              ${catArticles.map((article) => `
+                <a href="/wiki/post?slug=${encodeURIComponent(article.slug)}" class="card group p-4 flex items-start gap-3 hover:border-accent-purple/30 transition-all">
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/20 transition-colors">
+                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-medium text-slate-200 text-sm leading-5 group-hover:text-white transition-colors line-clamp-1 mb-1">${escapeHtml(article.title)}</h3>
+                    ${article.excerpt ? `<p class="text-slate-500 text-xs line-clamp-2 leading-4">${escapeHtml(article.excerpt)}</p>` : ''}
+                  </div>
+                </a>
+              `).join('')}
+            </div>
+          </section>
+        `).join('')}
+      </div>
+    `
+  }
+
+  async function hydrateWikiPage() {
+    const params = new URLSearchParams(window.location.search)
+    const tag = params.get('tag') || ''
+    const category = params.get('category') || ''
+
+    const query = new URLSearchParams()
+    query.set('type', 'wiki')
+    query.set('limit', '50')
+    if (tag) query.set('tag', tag)
+    if (category) query.set('category', category)
+
+    try {
+      const [articlesRes, tagsRes] = await Promise.all([
+        fetch(`${API}/api/articles?${query}`),
+        fetch(`${API}/api/tags`),
+      ])
+      if (!articlesRes.ok) throw new Error(`HTTP ${articlesRes.status}`)
+      const data = await articlesRes.json()
+      const tagsData = tagsRes.ok ? await tagsRes.json() : []
+
+      renderFilters(Array.isArray(tagsData) ? tagsData : [], tag, category)
+      renderContent(Array.isArray(data.results) ? data.results : [])
+    } catch (err) {
+      console.warn('Failed to load wiki data.', err)
+    }
+  }
+
+  hydrateWikiPage()
+</script>
