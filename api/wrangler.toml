@@ -7,12 +7,12 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "techblog-db"
-database_id = "YOUR_D1_DATABASE_ID"  # ← run `wrangler d1 create techblog-db` and paste the uuid here
+database_id = "5a3dfe2f-2fb9-4cc2-bac5-6192df2d349b"  # ← run `wrangler d1 create techblog-db` and paste the uuid here
 
 [vars]
 # Allowed frontend origins (CORS)
 # Supports comma-separated domains; supports * wildcard; no trailing /
-ALLOWED_ORIGIN = "https://YOUR_PROJECT.pages.dev"  # ← your frontend domain (supports comma-separated, wildcard *)
+ALLOWED_ORIGIN = "https://techblog-94z.pages.dev"  # ← your frontend domain (supports comma-separated, wildcard *)
 
 # Set ADMIN_TOKEN via `wrangler secret put ADMIN_TOKEN`, do not put it here
 

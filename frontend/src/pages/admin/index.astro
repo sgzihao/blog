@@ -2,10 +2,11 @@
 // src/pages/admin/index.astro
 import BaseLayout from '../../layouts/BaseLayout.astro'
 const siteEmoji = import.meta.env.PUBLIC_SITE_EMOJI || '🤖'
+const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').replace(/\/+$/, '')
 ---
 
 <BaseLayout title="Admin Dashboard">
-  <div id="app" class="min-h-screen bg-surface-900">
+  <div id="app" class="min-h-screen bg-surface-900" data-api-url={apiUrl}>
     <!-- Login Screen -->
     <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
       <div class="w-full max-w-sm">
@@ -311,7 +312,7 @@ const siteEmoji = import.meta.env.PUBLIC_SITE_EMOJI || '🤖'
   let categories: any[] = []
   let tags: any[] = []
   
-  const API = (import.meta as any).env.PUBLIC_API_URL || 'http://localhost:8787'
+  const API = document.getElementById('app')?.getAttribute('data-api-url') || 'http://localhost:8787'
 
   // ==================== DOM Refs ====================
   const loginScreen = document.getElementById('login-screen')!
