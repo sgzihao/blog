@@ -1,0 +1,298 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro'
+---
+
+<SiteLayout
+  title="Singapore Primary AI Study"
+  description="AI study helper and mistake bank for Singapore primary school children (P1 to P6)."
+>
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-10">
+    <div class="text-center max-w-3xl mx-auto">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-400/10 text-emerald-300 border border-emerald-300/20">
+        Singapore Primary (P1-P6)
+      </span>
+      <h1 class="mt-5 text-3xl sm:text-5xl font-display font-bold text-white leading-tight">
+        AI Study Coach + Mistake Bank
+      </h1>
+      <p class="mt-4 text-slate-300 text-base sm:text-lg leading-relaxed">
+        Help children learn faster by turning mistakes into focused practice. This MVP supports English, Math and Science with age-appropriate guidance.
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 pb-16 grid lg:grid-cols-2 gap-6">
+    <article class="card-glow p-6">
+      <div class="flex items-center justify-between gap-3 mb-6">
+        <h2 class="text-xl font-display font-semibold text-white">1) AI Study Planner</h2>
+        <span class="badge-blog">Personalized</span>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="level" class="label">Level</label>
+          <select id="level" class="select">
+            <option value="P1">Primary 1</option>
+            <option value="P2">Primary 2</option>
+            <option value="P3">Primary 3</option>
+            <option value="P4">Primary 4</option>
+            <option value="P5">Primary 5</option>
+            <option value="P6">Primary 6</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="subject" class="label">Subject</label>
+          <select id="subject" class="select">
+            <option value="Math">Math</option>
+            <option value="English">English</option>
+            <option value="Science">Science</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="goal" class="label">Learning Goal</label>
+          <input id="goal" class="input" placeholder="Example: Fractions word problems" />
+        </div>
+
+        <button id="generate-plan" class="btn-primary w-full justify-center">Generate Study Plan</button>
+      </div>
+
+      <div id="study-plan" class="mt-6 hidden rounded-xl border border-surface-600 bg-surface-800/60 p-4">
+        <h3 class="text-sm font-semibold text-cyan-300 mb-3">Today's AI Plan</h3>
+        <div id="study-plan-content" class="text-sm text-slate-200 space-y-2"></div>
+      </div>
+    </article>
+
+    <article class="card-glow p-6">
+      <div class="flex items-center justify-between gap-3 mb-6">
+        <h2 class="text-xl font-display font-semibold text-white">2) Mistake Bank</h2>
+        <span class="badge-wiki">Growth</span>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="mistake-subject" class="label">Subject</label>
+          <select id="mistake-subject" class="select">
+            <option value="Math">Math</option>
+            <option value="English">English</option>
+            <option value="Science">Science</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="mistake-topic" class="label">Topic</label>
+          <input id="mistake-topic" class="input" placeholder="Example: Subject-verb agreement" />
+        </div>
+
+        <div>
+          <label for="mistake-detail" class="label">What mistake happened?</label>
+          <textarea id="mistake-detail" rows="3" class="textarea" placeholder="Example: Forgot to convert cm to m before calculation"></textarea>
+        </div>
+
+        <button id="save-mistake" class="btn-secondary w-full justify-center">Save Mistake</button>
+      </div>
+
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-slate-200">Saved Mistakes</h3>
+          <button id="clear-mistakes" class="text-xs text-red-400 hover:text-red-300 transition-colors">Clear All</button>
+        </div>
+        <div id="mistake-list" class="space-y-2"></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+    <article class="card-glow p-6">
+      <h2 class="text-xl font-display font-semibold text-white mb-4">3) AI Practice from Mistakes</h2>
+      <p class="text-sm text-slate-400 mb-5">
+        Select a mistake in the list to auto-generate quick corrective practice.
+      </p>
+      <div id="practice-output" class="rounded-xl border border-surface-600 bg-surface-800/60 p-4 text-sm text-slate-200">
+        No mistake selected yet.
+      </div>
+    </article>
+  </section>
+</SiteLayout>
+
+<script>
+  const storageKey = 'sg-primary-mistake-bank-v1'
+
+  const levelEl = document.getElementById('level')
+  const subjectEl = document.getElementById('subject')
+  const goalEl = document.getElementById('goal')
+  const generatePlanBtn = document.getElementById('generate-plan')
+  const studyPlanEl = document.getElementById('study-plan')
+  const studyPlanContentEl = document.getElementById('study-plan-content')
+
+  const mistakeSubjectEl = document.getElementById('mistake-subject')
+  const mistakeTopicEl = document.getElementById('mistake-topic')
+  const mistakeDetailEl = document.getElementById('mistake-detail')
+  const saveMistakeBtn = document.getElementById('save-mistake')
+  const clearMistakesBtn = document.getElementById('clear-mistakes')
+  const mistakeListEl = document.getElementById('mistake-list')
+  const practiceOutputEl = document.getElementById('practice-output')
+
+  function readMistakes() {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  }
+
+  function writeMistakes(items) {
+    localStorage.setItem(storageKey, JSON.stringify(items))
+  }
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]
+    })
+  }
+
+  function getSubjectHints(subject, level) {
+    if (subject === 'Math') {
+      return [
+        `Warm-up: 5 ${level} arithmetic questions`,
+        'Concept review: 10 minutes with worked examples',
+        'Error correction: explain each step aloud',
+      ]
+    }
+    if (subject === 'English') {
+      return [
+        `Read a short ${level} passage and summarize in 3 lines`,
+        'Vocabulary drill: 8 words with sentence writing',
+        'Grammar check: find and fix 5 sentence errors',
+      ]
+    }
+    return [
+      `Review one ${level} science concept map`,
+      'Use CER method (Claim-Evidence-Reasoning) for one question',
+      'Draw one labelled diagram from memory',
+    ]
+  }
+
+  function renderStudyPlan() {
+    const level = levelEl?.value || 'P1'
+    const subject = subjectEl?.value || 'Math'
+    const goal = (goalEl?.value || '').trim() || 'General revision'
+    const hints = getSubjectHints(subject, level)
+
+    studyPlanContentEl.innerHTML = `
+      <p><strong>Focus:</strong> ${escapeHtml(goal)}</p>
+      <ul class="list-disc pl-5 space-y-1 text-slate-300">
+        ${hints.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+      </ul>
+      <p class="text-emerald-300"><strong>AI tip:</strong> After each question, ask "Why is this correct?" before checking answers.</p>
+    `
+    studyPlanEl.classList.remove('hidden')
+  }
+
+  function buildPractice(entry) {
+    const subject = entry.subject
+    const topic = escapeHtml(entry.topic)
+    const detail = escapeHtml(entry.detail)
+
+    if (subject === 'Math') {
+      return `
+        <p><strong>Target:</strong> ${topic}</p>
+        <p class="mt-2"><strong>Fix strategy:</strong> Write units first, solve step-by-step, then check if answer size makes sense.</p>
+        <p class="mt-2"><strong>Mini practice:</strong> Solve 3 similar questions and explain your final step in words.</p>
+        <p class="mt-2 text-slate-400"><strong>From mistake:</strong> ${detail}</p>
+      `
+    }
+
+    if (subject === 'English') {
+      return `
+        <p><strong>Target:</strong> ${topic}</p>
+        <p class="mt-2"><strong>Fix strategy:</strong> Read sentence aloud, identify tense/subject, then rewrite correctly.</p>
+        <p class="mt-2"><strong>Mini practice:</strong> Correct 5 sentences and create 2 original examples.</p>
+        <p class="mt-2 text-slate-400"><strong>From mistake:</strong> ${detail}</p>
+      `
+    }
+
+    return `
+      <p><strong>Target:</strong> ${topic}</p>
+      <p class="mt-2"><strong>Fix strategy:</strong> Use key words in question to choose concept, then support with one evidence.</p>
+      <p class="mt-2"><strong>Mini practice:</strong> Answer 2 open questions using Claim-Evidence-Reasoning format.</p>
+      <p class="mt-2 text-slate-400"><strong>From mistake:</strong> ${detail}</p>
+    `
+  }
+
+  function renderMistakes() {
+    const mistakes = readMistakes()
+
+    if (!mistakes.length) {
+      mistakeListEl.innerHTML = '<p class="text-sm text-slate-500">No mistakes yet. Add one after homework or tests.</p>'
+      return
+    }
+
+    mistakeListEl.innerHTML = mistakes
+      .map((item) => {
+        return `
+          <button class="w-full text-left rounded-xl border border-surface-600 bg-surface-800/50 p-3 hover:border-accent-cyan/30 transition-colors" data-id="${item.id}">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-cyan-300">${escapeHtml(item.subject)}</span>
+              <span class="text-xs text-slate-500">${new Date(item.createdAt).toLocaleDateString()}</span>
+            </div>
+            <p class="text-sm text-white mt-1">${escapeHtml(item.topic)}</p>
+            <p class="text-xs text-slate-400 mt-1 line-clamp-2">${escapeHtml(item.detail)}</p>
+          </button>
+        `
+      })
+      .join('')
+
+    mistakeListEl.querySelectorAll('[data-id]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id')
+        const selected = readMistakes().find((m) => m.id === id)
+        if (!selected) return
+        practiceOutputEl.innerHTML = buildPractice(selected)
+      })
+    })
+  }
+
+  generatePlanBtn?.addEventListener('click', renderStudyPlan)
+
+  saveMistakeBtn?.addEventListener('click', () => {
+    const subject = mistakeSubjectEl?.value || 'Math'
+    const topic = (mistakeTopicEl?.value || '').trim()
+    const detail = (mistakeDetailEl?.value || '').trim()
+
+    if (!topic || !detail) {
+      alert('Please enter both topic and mistake details.')
+      return
+    }
+
+    const entry = {
+      id: String(Date.now()),
+      subject,
+      topic,
+      detail,
+      createdAt: new Date().toISOString(),
+    }
+
+    const next = [entry, ...readMistakes()].slice(0, 100)
+    writeMistakes(next)
+
+    mistakeTopicEl.value = ''
+    mistakeDetailEl.value = ''
+    renderMistakes()
+  })
+
+  clearMistakesBtn?.addEventListener('click', () => {
+    writeMistakes([])
+    practiceOutputEl.textContent = 'No mistake selected yet.'
+    renderMistakes()
+  })
+
+  renderMistakes()
+</script>

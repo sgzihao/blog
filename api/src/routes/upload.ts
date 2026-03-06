@@ -5,11 +5,11 @@ import type { Bindings } from '../types'
 export const uploadRoutes = new Hono<{ Bindings: Bindings }>()
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-const MAX_SIZE = 2 * 1024 * 1024 // 2MB（D1 行大小限制，Base64 膨胀约 1.33x）
+const MAX_SIZE = 2 * 1024 * 1024 // 2MB (D1 row size limit, Base64 inflates ~1.33x)
 
-// ==================== 公开接口：提供图片 ====================
+// ==================== Public Endpoint: Serve Images ====================
 
-// GET /api/media/:id - 直接返回图片二进制（浏览器可直接显示）
+// GET /api/media/:id - Return image binary directly (browser can render it)
 uploadRoutes.get('/media/:id', async (c) => {
   const id = c.req.param('id')
 
@@ -29,9 +29,9 @@ uploadRoutes.get('/media/:id', async (c) => {
   })
 })
 
-// ==================== 管理接口：上传图片（需认证）====================
+// ==================== Admin Endpoint: Upload Image (auth required) ====================
 
-// POST /api/upload/image - 上传图片，存入 D1
+// POST /api/upload/image - Upload image, store in D1
 uploadRoutes.post('/upload/image', authMiddleware, async (c) => {
   const formData = await c.req.formData()
   const file = formData.get('file') as File | null
@@ -65,7 +65,7 @@ uploadRoutes.post('/upload/image', authMiddleware, async (c) => {
   }
 })
 
-// DELETE /api/upload/media/:id - 删除图片
+// DELETE /api/upload/media/:id - Delete image
 uploadRoutes.delete('/upload/media/:id', authMiddleware, async (c) => {
   const id = c.req.param('id')
   const result = await c.env.DB.prepare(`DELETE FROM media WHERE id = ?`).bind(id).run()

@@ -30,18 +30,18 @@ for (let i = 0; i < filtered.length; i++) {
 ---
 
 {totalPages > 1 && (
-  <div class="flex items-center justify-center gap-2 mt-12">
+  <nav aria-label="Pagination" class="flex items-center justify-center gap-2 mt-12">
     <!-- Prev -->
     {page > 1 ? (
       <a href={getPageUrl(page - 1)} class="btn-secondary px-4 py-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
         Previous
       </a>
     ) : (
       <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
         Previous
@@ -61,6 +61,7 @@ for (let i = 0; i < filtered.length; i++) {
                 ? 'bg-accent-cyan text-slate-900 font-semibold'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700'
             }`}
+            {...(item === page ? { 'aria-current': 'page' } : {})}
           >
             {item}
           </a>
@@ -72,17 +73,17 @@ for (let i = 0; i < filtered.length; i++) {
     {page < totalPages ? (
       <a href={getPageUrl(page + 1)} class="btn-secondary px-4 py-2">
         Next
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
       </a>
     ) : (
       <button class="btn-secondary px-4 py-2 opacity-40 cursor-not-allowed" disabled>
         Next
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
       </button>
     )}
-  </div>
+  </nav>
 )}

@@ -14,18 +14,20 @@ const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').repla
       <!-- Search Form -->
       <form id="search-form" class="flex gap-2">
         <div class="flex-1 relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          <input 
+          <label for="search-input" class="sr-only">Search query</label>
+          <input
             id="search-input"
-            type="text" 
-            name="q" 
+            type="text"
+            name="q"
             placeholder="Search blog posts and wiki notes..."
             class="input pl-11 text-base h-12"
             autofocus
           />
         </div>
+        <label for="search-type" class="sr-only">Content type</label>
         <select id="search-type" name="type" class="select w-28 h-12">
           <option value="">All</option>
           <option value="blog">Blog</option>
@@ -36,7 +38,7 @@ const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').repla
     </div>
 
     <div id="search-summary" class="hidden items-center gap-2 text-sm text-slate-500 mb-6"></div>
-    <div id="search-results"></div>
+    <div id="search-results" aria-live="polite"></div>
   </div>
 </SiteLayout>
 

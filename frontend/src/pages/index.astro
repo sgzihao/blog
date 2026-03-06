@@ -3,6 +3,7 @@
 import SiteLayout from '../layouts/SiteLayout.astro'
 import ArticleCard from '../components/ArticleCard.astro'
 import { getArticlesSafe, getCategoriesSafe, getTagsSafe } from '../lib/api'
+import { siteConfig } from '../lib/config'
 const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').replace(/\/+$/, '')
 
 const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
@@ -26,17 +27,16 @@ const [latestBlogs, latestWikis, categories, tags] = await Promise.all([
     <div class="relative text-center">
       <!-- Avatar / Icon -->
       <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-cyan/20 to-accent-purple/20 border border-accent-cyan/20 text-4xl mb-6 animate-in">
-        🤖
+        {siteConfig.emoji}
       </div>
 
       <h1 class="text-4xl sm:text-5xl font-display font-bold text-white mb-4 animate-in stagger-1">
-        AI & Tech Notes
+        {siteConfig.heroTitle}
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-purple"></span>
       </h1>
 
       <p class="text-slate-400 text-lg max-w-xl mx-auto mb-8 leading-relaxed animate-in stagger-2">
-        AI ideas, product features, and technical experiments in one place.<br/>
-        Production-ready posts, notes, and feature documentation.
+        {siteConfig.heroSubtitle}
       </p>
 
       <div class="flex items-center justify-center gap-3 animate-in stagger-3">

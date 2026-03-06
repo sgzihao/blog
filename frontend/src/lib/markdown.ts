@@ -3,6 +3,11 @@
 import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
+import DOMPurify from 'dompurify'
+import { JSDOM } from 'jsdom'
+
+const window = new JSDOM('').window
+const purify = DOMPurify(window as any)
 
 // Configure syntax highlighting
 marked.use(
@@ -18,8 +23,11 @@ marked.use(
 // Custom renderer
 const renderer = new marked.Renderer()
 
-// Open external links in a new tab
+// Open external links in a new tab, block dangerous protocols
 renderer.link = ({ href, title, text }) => {
+  if (href && /^\s*(javascript|data|vbscript):/i.test(href)) {
+    return String(text)
+  }
   const isExternal = href && (href.startsWith('http://') || href.startsWith('https://'))
   const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : ''
   const titleAttr = title ? ` title="${title}"` : ''
@@ -56,10 +64,14 @@ marked.setOptions({
 
 export function renderMarkdown(content: string): string {
   try {
-    return marked(content) as string
+    const raw = marked(content) as string
+    return purify.sanitize(raw, {
+      ADD_ATTR: ['target', 'rel', 'loading', 'aria-label'],
+      ADD_TAGS: ['mark'],
+    })
   } catch (e) {
     console.error('Markdown render error:', e)
-    return `<p>${content}</p>`
+    return `<p>${purify.sanitize(content)}</p>`
   }
 }
 

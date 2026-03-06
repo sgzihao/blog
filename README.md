@@ -1,232 +1,232 @@
-# TechBlog — 科技 AI 个人知识库
+# TechBlog — Tech & AI Personal Knowledge Base
 
-基于 **Cloudflare Workers + Pages + D1** 构建的 Blog/Wiki 个人网站，完全运行在 Cloudflare 边缘网络，免费额度足够个人使用。
+A Blog/Wiki personal website built on **Cloudflare Workers + Pages + D1**, running entirely on the Cloudflare edge network. The free tier is more than enough for personal use.
 
 ---
 
-## ⚡ 本地预览（完全从零开始，无需任何前置安装）
+## Quick Start: Local Preview (Zero Prerequisites)
 
-`dev.sh` 是一个全自动启动脚本，**从零开始**自动处理所有步骤，包括安装 Node.js 和 Wrangler。D1 数据库全部本地模拟，**无需 Cloudflare 账号**。
+`dev.sh` is a fully automated startup script that handles everything from scratch, including installing Node.js and Wrangler. The D1 database is simulated locally — **no Cloudflare account required**.
 
-### 支持的系统
+### Supported Systems
 
-| 系统 | Node.js 安装方式 |
-|------|----------------|
-| macOS | 自动安装 Homebrew → Node.js |
-| Ubuntu / Debian | 通过 NodeSource 官方源安装 Node.js 20 |
-| CentOS / RHEL / Fedora | 通过 NodeSource rpm 源安装 Node.js 20 |
-| 其他 Linux | 通过 nvm 安装 Node.js LTS |
+| System | Node.js Installation Method |
+|--------|---------------------------|
+| macOS | Auto-installs Homebrew then Node.js |
+| Ubuntu / Debian | Via NodeSource official apt repository (Node.js 20) |
+| CentOS / RHEL / Fedora | Via NodeSource rpm repository (Node.js 20) |
+| Other Linux | Via nvm (Node.js LTS) |
 
-### 运行方式
+### How to Run
 
-解压项目后，打开终端，进入 `techblog/` 目录，执行：
+After extracting the project, open a terminal, navigate to the `techblog/` directory, and run:
 
 ```bash
 bash dev.sh
 ```
 
-脚本会**全自动**完成以下所有步骤，无需手动干预：
+The script will **automatically** complete all of the following steps:
 
 ```
-[1/5] 检查 Node.js  → 未安装则自动安装（macOS/Ubuntu/CentOS/Linux 均支持）
-[2/5] 检查 Wrangler → 未安装则自动通过 npm 安装
-[3/5] 安装依赖      → npm install API 和前端所有依赖
-[4/5] 初始化数据库  → 创建本地 SQLite，写入示例分类/标签/文章
-[5/5] 启动服务      → 后台启动 API + 前端，自动打开浏览器
+[1/5] Check Node.js     -> Auto-installs if missing (macOS/Ubuntu/CentOS/Linux)
+[2/5] Check Wrangler    -> Auto-installs via npm if missing
+[3/5] Install deps      -> npm install for API and frontend
+[4/5] Initialize DB     -> Creates local SQLite with sample categories/tags/articles
+[5/5] Start services    -> Launches API + frontend in background, opens browser
 ```
 
-启动完成后终端会显示：
+On completion, the terminal will display:
 
 ```
   ╔════════════════════════════════════════════╗
-  ║         🚀  本地预览已就绪！               ║
+  ║         Local preview is ready!            ║
   ╚════════════════════════════════════════════╝
 
-  🌐  网站首页   →  http://localhost:4321
-  🔧  管理后台   →  http://localhost:4321/admin
-  🔌  API 接口   →  http://localhost:8787
+  Website    ->  http://localhost:4321
+  Admin      ->  http://localhost:4321/admin
+  API        ->  http://localhost:8787
 
-  🔑  管理密码   →  dev-token-123
+  Admin password  ->  dev-token-123
 ```
 
-### 常用命令
+### Common Commands
 
 ```bash
-bash dev.sh           # 启动（首次会自动安装所有依赖）
-bash dev.sh --stop    # 停止所有后台服务
-bash dev.sh --reset   # 重置数据库（清空数据重新初始化，保留已安装工具）
+bash dev.sh           # Start (auto-installs all dependencies on first run)
+bash dev.sh --stop    # Stop all background services
+bash dev.sh --reset   # Reset database (clears data, keeps installed tools)
 ```
 
-### 本地模式说明
+### Local Mode Details
 
-| 资源 | 本地存储位置 | 说明 |
-|------|------------|------|
-| D1 数据库 | `api/.wrangler/state/v3/d1/` | 本地 SQLite 文件 |
-| API 日志 | `.dev-logs/api.log` | 实时输出 |
-| 前端日志 | `.dev-logs/frontend.log` | 实时输出 |
+| Resource | Local Storage Path | Notes |
+|----------|-------------------|-------|
+| D1 Database | `api/.wrangler/state/v3/d1/` | Local SQLite file |
+| API Logs | `.dev-logs/api.log` | Real-time output |
+| Frontend Logs | `.dev-logs/frontend.log` | Real-time output |
 
-> **注意**：本地预览时图片上传功能可以正常使用，但上传后的图片 URL 无法在浏览器中直接预览（因为没有公开 HTTP 服务），部署到 Cloudflare 后图片即可正常显示。
-
----
-
-## 目录
-
-- [功能特性](#功能特性)
-- [技术架构](#技术架构)
-- [项目结构](#项目结构)
-- [部署前准备](#部署前准备)
-- [完整部署流程](#完整部署流程)
-  - [第一步：创建 Cloudflare 资源](#第一步创建-cloudflare-资源)
-  - [第二步：配置 API](#第二步配置-api)
-  - [第三步：初始化数据库](#第三步初始化数据库)
-  - [第四步：部署 Workers API](#第四步部署-workers-api)
-  - [第五步：配置并部署前端](#第五步配置并部署前端)
-- [本地开发](#本地开发)
-- [使用管理后台](#使用管理后台)
-- [常见问题](#常见问题)
-- [Cloudflare 免费额度说明](#cloudflare-免费额度说明)
+> **Note**: Image uploads work in local preview, but uploaded image URLs cannot be previewed directly in the browser (no public HTTP service). Images will display correctly after deploying to Cloudflare.
 
 ---
 
-## 功能特性
+## Table of Contents
 
-| 功能 | 说明 |
-|------|------|
-| 📝 Blog + 📚 Wiki | 双内容模式，Blog 发原创文章，Wiki 整理系统笔记 |
-| ✍️ Markdown 写作 | 支持 GFM 语法、代码高亮（highlight.js）、表格、任务列表 |
-| 🔍 全文搜索 | 基于 D1 FTS5 引擎，支持中英文关键词检索，显示高亮摘要 |
-| 🗂️ 分类 + 标签 | 多维度内容组织，支持按分类/标签筛选 |
-| 🖼️ 图片上传 | 拖拽或点击上传，Base64 存入 D1，通过 Worker 提供访问 |
-| 🔐 管理后台 | Token 认证，文章 CRUD、分类/标签管理、数据统计 |
-| 📖 文章目录 | 自动提取 Markdown 标题生成 TOC，滚动高亮当前章节 |
-| 📱 响应式 | 深色主题，移动端适配，Tailwind CSS |
-| ⚡ 边缘部署 | 全球 CDN 加速，冷启动极快，无服务器维护 |
+- [Features](#features)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Full Deployment Guide](#full-deployment-guide)
+  - [Step 1: Create Cloudflare Resources](#step-1-create-cloudflare-resources)
+  - [Step 2: Configure the API](#step-2-configure-the-api)
+  - [Step 3: Initialize the Database](#step-3-initialize-the-database)
+  - [Step 4: Deploy Workers API](#step-4-deploy-workers-api)
+  - [Step 5: Configure and Deploy Frontend](#step-5-configure-and-deploy-frontend)
+- [Local Development](#local-development)
+- [Using the Admin Panel](#using-the-admin-panel)
+- [FAQ](#faq)
+- [Cloudflare Free Tier](#cloudflare-free-tier)
 
 ---
 
-## 技术架构
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| Blog + Wiki | Dual content modes — Blog for original articles, Wiki for organized notes |
+| Markdown Editor | GFM syntax, code highlighting (highlight.js), tables, task lists |
+| Full-Text Search | Based on D1 FTS5, supports keyword search with highlighted excerpts |
+| Categories + Tags | Multi-dimensional content organization with filtering |
+| Image Upload | Drag-and-drop or click to upload, Base64 stored in D1, served via Worker |
+| Admin Panel | Token authentication, article CRUD, category/tag management, statistics |
+| Table of Contents | Auto-generated from Markdown headings, scroll-aware highlighting |
+| Responsive Design | Dark theme, mobile-friendly, Tailwind CSS |
+| Edge Deployment | Global CDN acceleration, fast cold starts, no server maintenance |
+
+---
+
+## Architecture
 
 ```
-用户浏览器
+User Browser
     │
     ▼
-Cloudflare Pages     ← Astro 静态前端（全球 CDN）
+Cloudflare Pages     ← Astro static frontend (Global CDN)
     │
-    │  API 请求（fetch）
+    │  API requests (fetch)
     ▼
-Cloudflare Workers   ← Hono.js 后端 API（边缘计算）
+Cloudflare Workers   ← Hono.js backend API (Edge computing)
     │
     ▼
 Cloudflare D1
-（SQLite 数据库：文章 / 分类 / 标签 / 图片）
+(SQLite database: articles / categories / tags / images)
 ```
 
-> 图片以 Base64 存入 D1，通过 Worker 的 `/api/media/:id` 端点直接提供访问，无需 R2。
+> Images are stored as Base64 in D1 and served directly via the Worker's `/api/media/:id` endpoint — no R2 needed.
 
-**技术选型：**
+**Tech Stack:**
 
-- **后端**：[Hono.js](https://hono.dev/) on Cloudflare Workers — 轻量、TypeScript 原生
-- **数据库**：Cloudflare D1（SQLite）+ FTS5 全文搜索 + media 表存储图片
-- **前端**：[Astro](https://astro.build/) 静态生成 + Tailwind CSS
-- **部署**：Cloudflare Pages（前端）+ Workers（API）
+- **Backend**: [Hono.js](https://hono.dev/) on Cloudflare Workers — lightweight, native TypeScript
+- **Database**: Cloudflare D1 (SQLite) + FTS5 full-text search + media table for images
+- **Frontend**: [Astro](https://astro.build/) static generation + Tailwind CSS
+- **Deployment**: Cloudflare Pages (frontend) + Workers (API)
 
 ---
 
-## 项目结构
+## Project Structure
 
 ```
 techblog/
 ├── README.md
-├── deploy.sh                          # 一键部署脚本
+├── deploy.sh                          # One-click deployment script
 │
-├── api/                               # Cloudflare Workers 后端
-│   ├── wrangler.toml                  # ⚠️ 需要填写 database_id
+├── api/                               # Cloudflare Workers backend
+│   ├── wrangler.toml                  # ⚠️ Requires database_id
 │   ├── package.json
 │   ├── tsconfig.json
-│   ├── schema.sql                     # D1 数据库结构 + 种子数据
+│   ├── schema.sql                     # D1 database schema + seed data
 │   └── src/
-│       ├── index.ts                   # 入口文件，路由挂载
-│       ├── types.ts                   # TypeScript 类型定义
+│       ├── index.ts                   # Entry point, route mounting
+│       ├── types.ts                   # TypeScript type definitions
 │       ├── middleware/
-│       │   └── auth.ts                # Bearer Token 认证中间件
+│       │   └── auth.ts                # Bearer Token auth middleware
 │       └── routes/
-│           ├── articles.ts            # 公开文章读取接口
-│           ├── search.ts              # FTS5 全文搜索接口
-│           ├── taxonomy.ts            # 分类/标签查询接口
-│           ├── admin.ts               # 管理 CRUD（需认证）
-│           └── upload.ts              # 图片上传/提供（存入 D1）
+│           ├── articles.ts            # Public article read endpoints
+│           ├── search.ts              # FTS5 full-text search endpoint
+│           ├── taxonomy.ts            # Category/tag query endpoint
+│           ├── admin.ts               # Admin CRUD (auth required)
+│           └── upload.ts              # Image upload/serve (stored in D1)
 │
-└── frontend/                          # Astro 前端
+└── frontend/                          # Astro frontend
     ├── astro.config.mjs
     ├── tailwind.config.mjs
     ├── wrangler.toml
     ├── package.json
-    ├── .env.example                   # ⚠️ 复制为 .env 并填写
+    ├── .env.example                   # ⚠️ Copy to .env and fill in
     └── src/
         ├── lib/
-        │   ├── api.ts                 # API 客户端封装
-        │   └── markdown.ts            # Markdown 渲染（含代码高亮）
+        │   ├── api.ts                 # API client wrapper
+        │   └── markdown.ts            # Markdown renderer (with code highlighting)
         ├── styles/
-        │   └── global.css             # 全局样式 + 深色主题
+        │   └── global.css             # Global styles + dark theme
         ├── components/
         │   ├── Navbar.astro
         │   ├── Footer.astro
         │   ├── ArticleCard.astro
         │   └── Pagination.astro
         ├── layouts/
-        │   ├── BaseLayout.astro       # HTML 基础结构 + SEO meta
-        │   └── SiteLayout.astro       # 含导航栏/页脚的完整布局
+        │   ├── BaseLayout.astro       # HTML base structure + SEO meta
+        │   └── SiteLayout.astro       # Full layout with navbar/footer
         └── pages/
-            ├── index.astro            # 首页
-            ├── search.astro           # 全文搜索页
-            ├── 404.astro              # 404 页面
+            ├── index.astro            # Home page
+            ├── search.astro           # Full-text search page
+            ├── 404.astro              # 404 page
             ├── blog/
-            │   ├── index.astro        # Blog 列表（含筛选侧栏）
-            │   └── [slug].astro       # Blog 文章详情（含目录）
+            │   ├── index.astro        # Blog list (with filter sidebar)
+            │   └── [slug].astro       # Blog article detail (with TOC)
             ├── wiki/
-            │   ├── index.astro        # Wiki 列表（按分类分组）
-            │   └── [slug].astro       # Wiki 文章详情（含目录）
+            │   ├── index.astro        # Wiki list (grouped by category)
+            │   └── [slug].astro       # Wiki article detail (with TOC)
             └── admin/
-                └── index.astro        # 管理后台（Token 登录）
+                └── index.astro        # Admin panel (Token login)
 ```
 
 ---
 
-## 部署前准备
+## Prerequisites
 
-### 环境要求
+### Requirements
 
-- **Node.js** 18 或以上
-- **npm** 9 或以上（Node.js 自带）
-- **Wrangler CLI**（Cloudflare 官方命令行工具）
-- **Cloudflare 账号**（免费即可）
+- **Node.js** 18 or above
+- **npm** 9 or above (bundled with Node.js)
+- **Wrangler CLI** (Cloudflare official CLI tool)
+- **Cloudflare account** (free tier is fine)
 
-### 安装 Wrangler 并登录
+### Install Wrangler and Log In
 
 ```bash
-# 全局安装 Wrangler
+# Install Wrangler globally
 npm install -g wrangler
 
-# 登录 Cloudflare（会打开浏览器授权）
+# Log in to Cloudflare (opens browser for authorization)
 wrangler login
 
-# 验证登录状态
+# Verify login status
 wrangler whoami
 ```
 
 ---
 
-## 完整部署流程
+## Full Deployment Guide
 
-### 第一步：创建 Cloudflare 资源
+### Step 1: Create Cloudflare Resources
 
-**创建 D1 数据库：**
+**Create a D1 database:**
 
 ```bash
 wrangler d1 create techblog-db
 ```
 
-执行后会输出类似：
+This will output something like:
 
 ```
 ✅ Successfully created DB 'techblog-db'
@@ -236,59 +236,59 @@ wrangler d1 create techblog-db
 }
 ```
 
-⚠️ **记录这个 `uuid`**，下一步需要填入配置文件。
+⚠️ **Save this `uuid`** — you'll need it in the next step.
 
 ---
 
-### 第二步：配置 API
+### Step 2: Configure the API
 
-打开 `api/wrangler.toml`，将 `database_id` 替换为上一步记录的 uuid：
+Open `api/wrangler.toml` and replace `database_id` with the uuid from the previous step:
 
 ```toml
 [[d1_databases]]
 binding = "DB"
 database_name = "techblog-db"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # ← 填你的 uuid
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # ← your uuid here
 ```
 
-同时修改允许的前端域名（CORS）：
+Also update the allowed frontend origin (CORS):
 
 ```toml
 [vars]
 ALLOWED_ORIGIN = "https://techblog.pages.dev"
 ```
 
-**设置管理员 Token（密钥）：**
+**Set the admin token (secret):**
 
 ```bash
 cd api
 wrangler secret put ADMIN_TOKEN
-# 提示输入时，输入一个强密码（如：MyBlog@2025!）
-# 这个密码用于保护管理接口，请妥善保存
+# When prompted, enter a strong password (e.g., MyBlog@2025!)
+# This password protects the admin endpoints — keep it safe
 ```
 
 ---
 
-### 第三步：初始化数据库
+### Step 3: Initialize the Database
 
-**本地预览用（开发环境）：**
+**For local preview (development):**
 
 ```bash
 cd api
 wrangler d1 execute techblog-db --file=./schema.sql
 ```
 
-**生产环境（必须执行）：**
+**For production (required):**
 
 ```bash
 wrangler d1 execute techblog-db --remote --file=./schema.sql
 ```
 
-执行成功后，数据库会自动创建所有表结构，并插入示例分类、标签和 3 篇示例文章。
+On success, the database will create all tables and insert sample categories, tags, and 3 sample articles.
 
 ---
 
-### 第四步：部署 Workers API
+### Step 4: Deploy Workers API
 
 ```bash
 cd api
@@ -296,244 +296,294 @@ npm install
 wrangler deploy
 ```
 
-部署成功后会输出 Workers URL，例如：
+After deployment, you'll get a Workers URL like:
 
 ```
 ✅ Deployed techblog-api to https://techblog-api.yourname.workers.dev
 ```
 
-**⚠️ 记录这个 URL**，前端需要用到。
+**⚠️ Save this URL** — the frontend needs it.
 
-**验证 API 是否正常：**
+**Verify the API is working:**
 
 ```bash
 curl https://techblog-api.yourname.workers.dev/
-# 应返回: {"status":"ok","service":"TechBlog API","version":"1.0.0",...}
+# Should return: {"status":"ok","service":"TechBlog API","version":"1.0.0",...}
 ```
 
 ---
 
-### 第五步：配置并部署前端
+### Step 5: Configure and Deploy Frontend
 
-**配置环境变量：**
+**Set environment variables:**
 
 ```bash
 cd frontend
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，填入实际值：
+Edit the `.env` file with your actual values:
 
 ```bash
-# Workers API 地址（第四步得到的 URL）
+# === Required: Infrastructure ===
 PUBLIC_API_URL=https://techblog-api.yourname.workers.dev
-
-# 管理员 Token（与第二步设置的 ADMIN_TOKEN 相同）
 PUBLIC_ADMIN_TOKEN=MyBlog@2025!
 
-# 网站基本信息（根据自己情况修改）
-PUBLIC_SITE_NAME=AI & 科技笔记
-PUBLIC_SITE_DESCRIPTION=记录AI与科技的思考与探索
-PUBLIC_AUTHOR=你的名字
+# === Site Branding (customize as needed) ===
+PUBLIC_SITE_NAME=My Tech Blog
+PUBLIC_SITE_DESCRIPTION=Exploring AI and technology
+PUBLIC_SITE_EMOJI=🤖
+PUBLIC_HERO_TITLE=My Tech Blog
+PUBLIC_HERO_SUBTITLE=Ideas, notes, and documentation in one place.
+
+# === Author / Social ===
+PUBLIC_AUTHOR=Your Name
 PUBLIC_AUTHOR_GITHUB=https://github.com/yourusername
 PUBLIC_AUTHOR_TWITTER=https://twitter.com/yourusername
 ```
 
-**本地预览（可选）：**
+Also update `frontend/wrangler.toml` with your API URL and `frontend/astro.config.mjs` with your Pages domain.
+
+**Local preview (optional):**
 
 ```bash
 npm install
 npm run dev
-# 打开 http://localhost:4321 预览网站
+# Open http://localhost:4321 to preview
 ```
 
-**构建并部署到 Pages：**
+**Build and deploy to Pages:**
 
 ```bash
 npm run build
 wrangler pages deploy ./dist --project-name=techblog
 ```
 
-首次部署会询问是否创建新项目，选择 **Yes**。
+The first deployment will ask whether to create a new project — select **Yes**.
 
-部署成功后会输出类似：
+After deployment, you'll see something like:
 
 ```
 ✅ Deployment complete!
 https://techblog.pages.dev
 ```
 
-**更新 CORS 配置：**
+**Update CORS configuration:**
 
-得到 Pages URL 后，回到 `api/wrangler.toml`，更新 `ALLOWED_ORIGIN`：
+After getting the Pages URL, go back to `api/wrangler.toml` and update `ALLOWED_ORIGIN`:
 
 ```toml
 ALLOWED_ORIGIN = "https://techblog.pages.dev"
 ```
 
-然后重新部署 API：
+Then redeploy the API:
 
 ```bash
 cd api
 wrangler deploy
 ```
 
-🎉 **至此，网站已完整部署完成！**
+Your site is now fully deployed!
 
 ---
 
-## 本地开发
+## Configuration Checklist
 
-同时启动 API 和前端进行本地联调：
+Before deploying, update these files with your values:
+
+| File | What to Change |
+|------|---------------|
+| `api/wrangler.toml` | `database_id` (from `wrangler d1 create`), `ALLOWED_ORIGIN` (your Pages domain) |
+| `api/` secret | Run `wrangler secret put ADMIN_TOKEN` |
+| `frontend/.env` | Copy from `.env.example`, fill in `PUBLIC_API_URL`, `PUBLIC_ADMIN_TOKEN`, and branding |
+| `frontend/wrangler.toml` | `PUBLIC_API_URL` (your Workers URL) |
+| `frontend/astro.config.mjs` | `site` (your Pages domain, for sitemap/RSS) |
+| `deploy.sh` | Set `PAGES_PROJECT` env var or edit the default project name |
+
+### Environment Variables Reference
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PUBLIC_API_URL` | Yes | Your Workers API URL |
+| `PUBLIC_ADMIN_TOKEN` | Yes | Must match the ADMIN_TOKEN secret on your Workers API |
+| `PUBLIC_SITE_NAME` | No | Site name shown in navbar, footer, and meta tags (default: "TechBlog") |
+| `PUBLIC_SITE_DESCRIPTION` | No | SEO meta description |
+| `PUBLIC_SITE_EMOJI` | No | Logo emoji used in navbar, favicon, 404 page (default: "🤖") |
+| `PUBLIC_HERO_TITLE` | No | Homepage hero heading |
+| `PUBLIC_HERO_SUBTITLE` | No | Homepage hero subtext |
+| `PUBLIC_AUTHOR` | No | Author name in footer |
+| `PUBLIC_AUTHOR_GITHUB` | No | GitHub profile link (leave blank to hide) |
+| `PUBLIC_AUTHOR_TWITTER` | No | Twitter/X profile link (leave blank to hide) |
+
+### Quick Deploy
 
 ```bash
-# 终端 1：启动 Workers API（本地模拟）
+# After configuring all files above:
+bash deploy.sh all
+
+# Or deploy individually:
+bash deploy.sh api       # Deploy Workers API
+bash deploy.sh db        # Initialize remote database
+bash deploy.sh frontend  # Build and deploy frontend
+
+# Custom Pages project name:
+PAGES_PROJECT=myblog bash deploy.sh frontend
+```
+
+---
+
+## Local Development
+
+Run the API and frontend simultaneously for local development:
+
+```bash
+# Terminal 1: Start Workers API (local simulation)
 cd api
 npm install
 wrangler dev
-# API 运行在 http://localhost:8787
+# API runs at http://localhost:8787
 
-# 终端 2：启动 Astro 前端
+# Terminal 2: Start Astro frontend
 cd frontend
 npm install
-# 确保 .env 中 PUBLIC_API_URL=http://localhost:8787
+# Make sure .env has PUBLIC_API_URL=http://localhost:8787
 npm run dev
-# 前端运行在 http://localhost:4321
+# Frontend runs at http://localhost:4321
 ```
 
-本地开发时，D1 使用本地 SQLite 文件模拟，数据与远程隔离，不影响生产环境。
+In local development, D1 uses a local SQLite file — data is isolated from production.
 
-**本地初始化开发数据库：**
+**Initialize the local dev database:**
 
 ```bash
 cd api
 wrangler d1 execute techblog-db --file=./schema.sql
-# 注意：不加 --remote 就是写入本地开发数据库
+# Without --remote, this writes to the local dev database
 ```
 
 ---
 
-## 使用管理后台
+## Using the Admin Panel
 
-访问 `https://你的域名/admin`，进入管理后台。
+Visit `https://yourdomain.com/admin` to access the admin panel.
 
-### 登录
+### Login
 
-输入你在第二步设置的 `ADMIN_TOKEN` 即可登录。Token 会保存在 `sessionStorage`，关闭标签页后需重新登录。
+Enter the `ADMIN_TOKEN` you set in Step 2. The token is stored in `sessionStorage` and expires when the tab is closed.
 
-### 写作发布流程
+### Writing and Publishing
 
-1. 点击顶部导航「**写作**」标签
-2. 填写标题（Slug 会自动生成，也可手动修改）
-3. 在正文区域用 Markdown 编写内容，点击「预览」可实时渲染
-4. 在右侧设置面板选择类型（Blog / Wiki）、分类、标签
-5. 可拖拽或点击上传封面图片（Base64 存入 D1，最大 2MB）
-6. 点击「**发布**」立即发布，或「**保存草稿**」暂存
+1. Click the **Write** tab in the top navigation
+2. Enter a title (Slug is auto-generated, or edit manually)
+3. Write content in Markdown in the body area; click **Preview** for live rendering
+4. In the right panel, select type (Blog / Wiki), categories, and tags
+5. Drag-and-drop or click to upload a cover image (Base64 stored in D1, max 2MB)
+6. Click **Publish** to publish immediately, or **Save Draft** to save
 
-### 管理现有文章
+### Managing Articles
 
-1. 切换到「**文章**」标签，查看所有文章列表
-2. 可按类型（Blog/Wiki）和状态（已发布/草稿）筛选
-3. 点击「编辑」进入编辑器，修改后重新发布
-4. 点击 🔗 图标可在新标签页预览文章
-5. 编辑模式下，右侧底部「危险操作」区域可删除文章
+1. Switch to the **Articles** tab to view all articles
+2. Filter by type (Blog/Wiki) and status (Published/Draft)
+3. Click **Edit** to open the editor; republish after changes
+4. Click the link icon to preview the article in a new tab
+5. In edit mode, the **Danger Zone** at the bottom right allows article deletion
 
-### 管理分类和标签
+### Managing Categories and Tags
 
-切换到「**分类/标签**」标签：
+Switch to the **Categories/Tags** tab:
 
-- 点击「+ 新建分类」填写名称、Slug 和颜色
-- 点击「+ 新建标签」填写名称和 Slug
-- 点击分类/标签右侧的 × 删除（已关联文章的不建议删除）
+- Click **+ New Category** to add a name, slug, and color
+- Click **+ New Tag** to add a name and slug
+- Click the × next to a category/tag to delete it (avoid deleting those with linked articles)
 
-### 数据统计
+### Statistics
 
-切换到「**统计**」标签，查看总文章数、发布数、草稿数、总浏览量、分类数、标签数。
+Switch to the **Statistics** tab to view total articles, published count, drafts, total views, categories, and tags.
 
 ---
 
-## 常见问题
+## FAQ
 
-**Q：API 请求失败，前端报 CORS 错误？**
+**Q: API requests fail with CORS errors?**
 
-检查 `api/wrangler.toml` 中的 `ALLOWED_ORIGIN` 是否与你的前端实际域名一致，修改后重新执行 `wrangler deploy`。
+Check that `ALLOWED_ORIGIN` in `api/wrangler.toml` matches your actual frontend domain, then redeploy with `wrangler deploy`.
 
-**Q：图片上传成功但无法显示？**
+**Q: Image upload succeeds but images don't display?**
 
-图片通过 Worker 的 `/api/media/:id` 接口提供访问，确认 Workers API 已正常部署，前端的 `PUBLIC_API_URL` 填写正确。
+Images are served via the Worker's `/api/media/:id` endpoint. Make sure the Workers API is deployed correctly and `PUBLIC_API_URL` is set properly in the frontend.
 
-**Q：管理后台登录提示 Token 错误？**
+**Q: Admin login shows token error?**
 
-确认 `.env` 中的 `PUBLIC_ADMIN_TOKEN` 与 `wrangler secret put ADMIN_TOKEN` 时输入的值完全一致（区分大小写）。
+Verify that `PUBLIC_ADMIN_TOKEN` in `.env` exactly matches the value you entered for `wrangler secret put ADMIN_TOKEN` (case-sensitive).
 
-**Q：搜索中文时没有结果？**
+**Q: Search returns no results?**
 
-D1 FTS5 对中文使用字符级分词，搜索效果有限。建议搜索时使用 2-4 个字的关键词，避免搜索长句。如需更好的中文搜索体验，可考虑接入 Cloudflare Vectorize 做语义搜索。
+D1 FTS5 uses character-level tokenization. For best results, use short keywords (2-4 characters). For better search, consider integrating Cloudflare Vectorize for semantic search.
 
-**Q：如何绑定自定义域名？**
+**Q: How to set up a custom domain?**
 
-- **API（Workers）**：Dashboard → Workers & Pages → techblog-api → Settings → Triggers → Custom Domains
-- **前端（Pages）**：Dashboard → Workers & Pages → techblog → Custom Domains
+- **API (Workers)**: Dashboard -> Workers & Pages -> techblog-api -> Settings -> Triggers -> Custom Domains
+- **Frontend (Pages)**: Dashboard -> Workers & Pages -> techblog -> Custom Domains
 
-**Q：本地预览时图片上传后无法显示？**
+**Q: Images don't show in local preview after upload?**
 
-本地预览时图片存入本地 D1，通过 `http://localhost:8787/api/media/:id` 访问，前端加载时需要确保 API 正在运行（`wrangler dev` 已启动）。
+In local preview, images are stored in local D1 and accessed via `http://localhost:8787/api/media/:id`. Make sure the API is running (`wrangler dev` is started).
 
-**Q：`bash dev.sh` 提示端口被占用？**
+**Q: `bash dev.sh` says port is in use?**
 
-脚本会自动尝试释放端口，如仍然失败，手动执行：
+The script automatically tries to release ports. If it still fails, manually run:
 ```bash
 lsof -ti:8787 | xargs kill -9
 lsof -ti:4321 | xargs kill -9
 ```
 
-**Q：本地数据库的数据如何持久化？**
+**Q: How is local database data persisted?**
 
-数据存储在 `api/.wrangler/state/v3/d1/` 目录下的 SQLite 文件，只要不执行 `--reset`，数据会一直保留。
+Data is stored in SQLite files under `api/.wrangler/state/v3/d1/`. As long as you don't run `--reset`, data is preserved.
 
-**Q：如何更新已部署的网站？**
+**Q: How to update a deployed site?**
 
 ```bash
-# 更新 API
+# Update API
 cd api && wrangler deploy
 
-# 更新前端
+# Update frontend
 cd frontend && npm run build && wrangler pages deploy ./dist --project-name=techblog
 ```
 
 ---
 
-## Cloudflare 免费额度说明
+## Cloudflare Free Tier
 
-| 服务 | 免费额度 | 说明 |
-|------|---------|------|
-| Workers | 10 万请求/天 | API 调用次数 |
-| Pages | 无限请求 | 前端静态资源 |
-| D1 | 500 MB 存储，500 万行读/天 | 数据库 |
+| Service | Free Allowance | Description |
+|---------|---------------|-------------|
+| Workers | 100K requests/day | API call quota |
+| Pages | Unlimited requests | Frontend static assets |
+| D1 | 500 MB storage, 5M row reads/day | Database |
 
-对于个人博客/知识库，以上额度**完全免费，无需付费**。
+For a personal blog/knowledge base, these limits are **more than sufficient at no cost**.
 
 ---
 
-## API 接口参考
+## API Reference
 
-所有接口基础路径：`https://techblog-api.yourname.workers.dev`
+All endpoints are relative to: `https://techblog-api.yourname.workers.dev`
 
-| 方法 | 路径 | 说明 | 需要认证 |
-|------|------|------|---------|
-| GET | `/api/articles` | 获取文章列表，支持 `type/category/tag/page` 参数 | 否 |
-| GET | `/api/articles/:slug` | 获取单篇文章详情 | 否 |
-| GET | `/api/search?q=关键词` | 全文搜索 | 否 |
-| GET | `/api/categories` | 获取所有分类 | 否 |
-| GET | `/api/tags` | 获取所有标签 | 否 |
-| GET | `/api/admin/articles` | 获取所有文章（含草稿） | ✅ |
-| POST | `/api/admin/articles` | 创建文章 | ✅ |
-| PUT | `/api/admin/articles/:slug` | 更新文章 | ✅ |
-| DELETE | `/api/admin/articles/:slug` | 删除文章 | ✅ |
-| POST | `/api/admin/categories` | 创建分类 | ✅ |
-| POST | `/api/admin/tags` | 创建标签 | ✅ |
-| GET | `/api/admin/stats` | 获取统计数据 | ✅ |
-| POST | `/api/upload/image` | 上传图片到 D1（multipart/form-data，最大 2MB） | ✅ |
-| GET | `/api/media/:id` | 获取图片（直接返回二进制） | 否 |
+| Method | Path | Description | Auth Required |
+|--------|------|-------------|--------------|
+| GET | `/api/articles` | List articles; supports `type/category/tag/page` params | No |
+| GET | `/api/articles/:slug` | Get single article detail | No |
+| GET | `/api/search?q=keyword` | Full-text search | No |
+| GET | `/api/categories` | List all categories | No |
+| GET | `/api/tags` | List all tags | No |
+| GET | `/api/admin/articles` | List all articles (including drafts) | Yes |
+| POST | `/api/admin/articles` | Create article | Yes |
+| PUT | `/api/admin/articles/:slug` | Update article | Yes |
+| DELETE | `/api/admin/articles/:slug` | Delete article | Yes |
+| POST | `/api/admin/categories` | Create category | Yes |
+| POST | `/api/admin/tags` | Create tag | Yes |
+| GET | `/api/admin/stats` | Get statistics | Yes |
+| POST | `/api/upload/image` | Upload image to D1 (multipart/form-data, max 2MB) | Yes |
+| GET | `/api/media/:id` | Get image (returns binary directly) | No |
 
-认证方式：请求头添加 `Authorization: Bearer <ADMIN_TOKEN>`
+Authentication: Add `Authorization: Bearer <ADMIN_TOKEN>` header to requests.

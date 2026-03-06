@@ -3,10 +3,11 @@ import type { Bindings } from '../types'
 
 export const articleRoutes = new Hono<{ Bindings: Bindings }>()
 
-// GET /api/articles - 获取文章列表
+// GET /api/articles - Get article list
 articleRoutes.get('/', async (c) => {
   const { type, category, tag, page = '1', limit = '12', status = 'published' } = c.req.query()
-  const offset = (parseInt(page) - 1) * parseInt(limit)
+  const parsedLimit = Math.min(Math.max(1, parseInt(limit) || 12), 100)
+  const offset = (parseInt(page) - 1) * parsedLimit
 
   let conditions = [`a.status = ?`]
   const params: any[] = [status]
@@ -18,7 +19,7 @@ articleRoutes.get('/', async (c) => {
 
   const whereClause = conditions.join(' AND ')
 
-  // 需要按 tag 或 category 过滤时，先查出符合条件的 article_id
+  // When filtering by tag or category, first get matching article_ids
   let articleIds: number[] | null = null
 
   if (tag) {
@@ -27,7 +28,7 @@ articleRoutes.get('/', async (c) => {
        JOIN tags t ON at.tag_id = t.id WHERE t.slug = ?`
     ).bind(tag).all<{ article_id: number }>()
     articleIds = tagResult.results.map(r => r.article_id)
-    if (articleIds.length === 0) return c.json({ results: [], total: 0, page: parseInt(page), limit: parseInt(limit) })
+    if (articleIds.length === 0) return c.json({ results: [], total: 0, page: parseInt(page), limit: parsedLimit })
   }
 
   if (category) {
@@ -37,17 +38,20 @@ articleRoutes.get('/', async (c) => {
     ).bind(category).all<{ article_id: number }>()
     const catIds = catResult.results.map(r => r.article_id)
     articleIds = articleIds ? articleIds.filter(id => catIds.includes(id)) : catIds
-    if (articleIds.length === 0) return c.json({ results: [], total: 0, page: parseInt(page), limit: parseInt(limit) })
+    if (articleIds.length === 0) return c.json({ results: [], total: 0, page: parseInt(page), limit: parsedLimit })
   }
 
   let idFilter = ''
+  let idParams: number[] = []
   if (articleIds !== null) {
-    idFilter = ` AND a.id IN (${articleIds.join(',')})`
+    const placeholders = articleIds.map(() => '?').join(',')
+    idFilter = ` AND a.id IN (${placeholders})`
+    idParams = articleIds
   }
 
   const countResult = await c.env.DB.prepare(
     `SELECT COUNT(DISTINCT a.id) as total FROM articles a WHERE ${whereClause}${idFilter}`
-  ).bind(...params).first<{ total: number }>()
+  ).bind(...params, ...idParams).first<{ total: number }>()
 
   const articles = await c.env.DB.prepare(`
     SELECT 
@@ -66,17 +70,17 @@ articleRoutes.get('/', async (c) => {
     GROUP BY a.id
     ORDER BY a.created_at DESC
     LIMIT ? OFFSET ?
-  `).bind(...params, parseInt(limit), offset).all()
+  `).bind(...params, ...idParams, parsedLimit, offset).all()
 
   return c.json({
     results: articles.results,
     total: countResult?.total ?? 0,
     page: parseInt(page),
-    limit: parseInt(limit)
+    limit: parsedLimit
   })
 })
 
-// GET /api/articles/:slug - 获取单篇文章
+// GET /api/articles/:slug - Get single article
 articleRoutes.get('/:slug', async (c) => {
   const slug = c.req.param('slug')
 
@@ -100,7 +104,7 @@ articleRoutes.get('/:slug', async (c) => {
 
   if (!article) return c.json({ error: 'Article not found' }, 404)
 
-  // 增加浏览计数（异步，不阻塞响应）
+  // Increment view count (async, non-blocking)
   c.executionCtx.waitUntil(
     c.env.DB.prepare(`UPDATE articles SET view_count = view_count + 1 WHERE slug = ?`)
       .bind(slug).run()

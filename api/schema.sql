@@ -1,17 +1,17 @@
 -- TechBlog Database Schema
--- 执行: wrangler d1 execute techblog-db --file=./schema.sql
+-- Execute: wrangler d1 execute techblog-db --file=./schema.sql
 
--- 媒体文件表（图片存 Base64，通过 /api/media/:id 提供访问）
+-- Media table (images stored as Base64, served via /api/media/:id)
 CREATE TABLE IF NOT EXISTS media (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   mime_type TEXT NOT NULL,
   original_name TEXT,
-  data TEXT NOT NULL,        -- Base64 编码的图片数据
-  size INTEGER DEFAULT 0,   -- 原始文件大小（字节）
+  data TEXT NOT NULL,        -- Base64-encoded image data
+  size INTEGER DEFAULT 0,   -- Original file size (bytes)
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 文章表
+-- Articles table
 CREATE TABLE IF NOT EXISTS articles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT UNIQUE NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS articles (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 分类表
+-- Categories table
 CREATE TABLE IF NOT EXISTS categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 标签表
+-- Tags table
 CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -44,21 +44,21 @@ CREATE TABLE IF NOT EXISTS tags (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 文章-分类关联
+-- Article-Category association
 CREATE TABLE IF NOT EXISTS article_categories (
   article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
   category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
   PRIMARY KEY (article_id, category_id)
 );
 
--- 文章-标签关联
+-- Article-Tag association
 CREATE TABLE IF NOT EXISTS article_tags (
   article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
   tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
   PRIMARY KEY (article_id, tag_id)
 );
 
--- FTS5 全文搜索虚拟表（支持中文按字符分词）
+-- FTS5 full-text search virtual table (unicode61 tokenizer for character-level tokenization)
 CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts USING fts5(
   title,
   content,
@@ -68,7 +68,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts USING fts5(
   tokenize='unicode61'
 );
 
--- 自动同步 FTS 触发器
+-- Auto-sync FTS triggers
 CREATE TRIGGER IF NOT EXISTS articles_ai AFTER INSERT ON articles BEGIN
   INSERT INTO articles_fts(rowid, title, content, excerpt)
   VALUES (new.id, new.title, new.content, COALESCE(new.excerpt, ''));
@@ -84,24 +84,24 @@ CREATE TRIGGER IF NOT EXISTS articles_ad AFTER DELETE ON articles BEGIN
   DELETE FROM articles_fts WHERE rowid = old.id;
 END;
 
--- 更新时间触发器
+-- Updated-at trigger
 CREATE TRIGGER IF NOT EXISTS articles_update_time AFTER UPDATE ON articles BEGIN
   UPDATE articles SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
 END;
 
--- 索引
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles(slug);
 CREATE INDEX IF NOT EXISTS idx_articles_type_status ON articles(type, status);
 CREATE INDEX IF NOT EXISTS idx_articles_created ON articles(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 CREATE INDEX IF NOT EXISTS idx_tags_slug ON tags(slug);
 
--- 初始种子数据
+-- Seed data
 INSERT OR IGNORE INTO categories (name, slug, description, color) VALUES
-  ('人工智能', 'ai', 'AI 前沿技术与应用', '#6366f1'),
-  ('大语言模型', 'llm', 'LLM 相关技术与研究', '#8b5cf6'),
-  ('开发工具', 'tools', '开发工具与工程实践', '#06b6d4'),
-  ('行业动态', 'news', '科技行业最新动态', '#10b981');
+  ('Artificial Intelligence', 'ai', 'Cutting-edge AI technology and applications', '#6366f1'),
+  ('Large Language Models', 'llm', 'LLM-related technology and research', '#8b5cf6'),
+  ('Dev Tools', 'tools', 'Developer tools and engineering practices', '#06b6d4'),
+  ('Industry News', 'news', 'Latest tech industry updates', '#10b981');
 
 INSERT OR IGNORE INTO tags (name, slug) VALUES
   ('ChatGPT', 'chatgpt'),
@@ -111,54 +111,54 @@ INSERT OR IGNORE INTO tags (name, slug) VALUES
   ('Agent', 'agent'),
   ('Prompt', 'prompt'),
   ('Fine-tuning', 'fine-tuning'),
-  ('开源', 'open-source'),
+  ('Open Source', 'open-source'),
   ('Cloudflare', 'cloudflare'),
   ('Python', 'python');
 
--- 示例文章
+-- Sample articles
 INSERT OR IGNORE INTO articles (slug, title, content, excerpt, type, status) VALUES
 (
   'welcome',
-  '欢迎来到我的科技AI知识库',
-  '# 欢迎来到我的科技AI知识库
+  'Welcome to My Tech & AI Knowledge Base',
+  '# Welcome to My Tech & AI Knowledge Base
 
-这里记录我对人工智能、大语言模型和前沿科技的思考与探索。
+This is where I document my thoughts and explorations on artificial intelligence, large language models, and cutting-edge technology.
 
-## 关于本站
+## About This Site
 
-本站分为两个部分：
+This site is divided into two sections:
 
-- **Blog**：分享我的原创文章、技术心得和行业洞察
-- **Wiki**：整理系统性的知识笔记，方便查阅和学习
+- **Blog**: Sharing original articles, technical insights, and industry analysis
+- **Wiki**: Organizing systematic knowledge notes for easy reference and learning
 
-## 近期关注方向
+## Current Focus Areas
 
-1. **大语言模型 (LLM)**：GPT-4、Claude 3、Gemini 等模型的能力边界与应用场景
-2. **AI Agent**：自主智能体的架构设计与实践
-3. **RAG 系统**：检索增强生成的工程实现
-4. **多模态 AI**：文字、图像、音频的融合理解
+1. **Large Language Models (LLM)**: Capabilities and applications of GPT-4, Claude 3, Gemini, and more
+2. **AI Agents**: Architecture design and implementation of autonomous agents
+3. **RAG Systems**: Engineering implementation of Retrieval-Augmented Generation
+4. **Multimodal AI**: Unified understanding of text, images, and audio
 
-## 开始探索
+## Start Exploring
 
-使用顶部导航在 Blog 和 Wiki 之间切换，或者使用搜索功能找到你感兴趣的内容。
+Use the top navigation to switch between Blog and Wiki, or use the search feature to find content that interests you.
 
 ---
 
-> "AI is not magic, it''s mathematics. But the results can feel like magic." — 某位工程师',
-  '欢迎来到这个记录AI与科技思考的个人知识库，这里有Blog原创文章和Wiki系统笔记。',
+> "AI is not magic, it''s mathematics. But the results can feel like magic."',
+  'Welcome to this personal knowledge base for AI and tech insights, featuring Blog articles and Wiki notes.',
   'blog',
   'published'
 ),
 (
   'llm-architecture-overview',
-  'LLM 架构全景：从 Transformer 到现代大模型',
-  '# LLM 架构全景：从 Transformer 到现代大模型
+  'LLM Architecture Overview: From Transformer to Modern Large Models',
+  '# LLM Architecture Overview: From Transformer to Modern Large Models
 
-## Transformer 基础
+## Transformer Fundamentals
 
-2017年，Google 发表了 *Attention is All You Need*，Transformer 架构从此改变了 NLP 领域。
+In 2017, Google published *Attention is All You Need*, and the Transformer architecture changed the NLP landscape forever.
 
-### 核心组件
+### Core Components
 
 ```python
 import torch
@@ -169,92 +169,92 @@ class MultiHeadAttention(nn.Module):
         super().__init__()
         self.num_heads = num_heads
         self.d_k = d_model // num_heads
-        
+
         self.W_q = nn.Linear(d_model, d_model)
         self.W_k = nn.Linear(d_model, d_model)
         self.W_v = nn.Linear(d_model, d_model)
         self.W_o = nn.Linear(d_model, d_model)
-    
+
     def forward(self, x):
         Q = self.W_q(x)
         K = self.W_k(x)
         V = self.W_v(x)
-        
+
         # Scaled Dot-Product Attention
         scores = torch.matmul(Q, K.transpose(-2, -1)) / (self.d_k ** 0.5)
         attn = torch.softmax(scores, dim=-1)
         return torch.matmul(attn, V)
 ```
 
-## 现代 LLM 的关键技术
+## Key Technologies in Modern LLMs
 
-### 1. RoPE 位置编码
+### 1. RoPE (Rotary Position Embedding)
 
-旋转位置编码（Rotary Position Embedding）相比传统绝对位置编码，能更好地外推到更长的序列。
+RoPE offers better extrapolation to longer sequences compared to traditional absolute position encodings.
 
-### 2. GQA（Grouped Query Attention）
+### 2. GQA (Grouped Query Attention)
 
-将 Multi-Head Attention 的 KV heads 数量减少，大幅降低推理时的显存占用：
-- MHA: Q/K/V heads 数量相同
-- MQA: 只有 1 个 K/V head
-- **GQA**: K/V heads 数量为 Q 的 1/G（Llama 3 使用此方案）
+Reduces the number of KV heads in Multi-Head Attention, significantly lowering memory usage during inference:
+- MHA: Same number of Q/K/V heads
+- MQA: Only 1 K/V head
+- **GQA**: K/V head count is 1/G of Q heads (used in Llama 3)
 
-### 3. SwiGLU 激活函数
+### 3. SwiGLU Activation Function
 
-替代传统 ReLU，在 FFN 层使用门控机制提升表达能力。
+Replaces traditional ReLU in the FFN layer with a gating mechanism for improved expressiveness.
 
-## 主流模型对比
+## Major Model Comparison
 
-| 模型 | 参数量 | 上下文长度 | 特点 |
-|------|--------|-----------|------|
-| GPT-4 | 未公开 | 128K | 最强综合能力 |
-| Claude 3.5 | 未公开 | 200K | 长上下文理解 |
-| Llama 3.1 | 405B | 128K | 开源最强 |
-| Gemini 1.5 | 未公开 | 1M | 超长上下文 |
+| Model | Parameters | Context Length | Highlights |
+|-------|-----------|---------------|------------|
+| GPT-4 | Undisclosed | 128K | Strongest overall capability |
+| Claude 3.5 | Undisclosed | 200K | Long context understanding |
+| Llama 3.1 | 405B | 128K | Best open-source model |
+| Gemini 1.5 | Undisclosed | 1M | Ultra-long context |
 
-## 结语
+## Conclusion
 
-LLM 技术发展迅猛，关键是理解底层原理，才能在应用层做出正确判断。',
-  'Transformer 架构详解，以及 RoPE、GQA、SwiGLU 等现代 LLM 关键技术的原理分析。',
+LLM technology is evolving rapidly. Understanding the underlying principles is key to making sound decisions at the application layer.',
+  'A deep dive into the Transformer architecture and key modern LLM technologies including RoPE, GQA, and SwiGLU.',
   'blog',
   'published'
 ),
 (
   'rag-system-guide',
-  'RAG 系统完整指南',
-  '# RAG 系统完整指南
+  'Complete Guide to RAG Systems',
+  '# Complete Guide to RAG Systems
 
-检索增强生成（Retrieval-Augmented Generation）是目前最实用的 LLM 应用架构之一。
+Retrieval-Augmented Generation (RAG) is one of the most practical LLM application architectures today.
 
-## 核心流程
+## Core Pipeline
 
 ```
-用户问题 → 向量化 → 向量检索 → 相关文档 → LLM 生成 → 答案
+User Query -> Vectorization -> Vector Search -> Relevant Documents -> LLM Generation -> Answer
 ```
 
-## 关键组件
+## Key Components
 
-### 1. 文档处理管道
+### 1. Document Processing Pipeline
 
-文档需要经过：切块（Chunking）→ 向量化（Embedding）→ 存储到向量数据库
+Documents go through: Chunking -> Embedding -> Storage in a vector database
 
-### 2. 检索策略
+### 2. Retrieval Strategies
 
-- **语义检索**：基于向量相似度
-- **关键词检索**：BM25 算法
-- **混合检索**：两者结合，效果最佳
+- **Semantic Search**: Based on vector similarity
+- **Keyword Search**: BM25 algorithm
+- **Hybrid Search**: Combining both for optimal results
 
-### 3. 重排序（Reranking）
+### 3. Reranking
 
-使用 Cross-Encoder 模型对初步检索结果重新打分，提升精度。
+Uses Cross-Encoder models to re-score initial retrieval results for improved precision.
 
-## 实践建议
+## Best Practices
 
-1. Chunk size 建议 512-1024 tokens，带 overlap
-2. 使用 BGE-M3 等多语言 Embedding 模型
-3. 生产环境使用 Qdrant 或 Weaviate 作为向量库
-4. 加入 Query 改写和 HyDE 技术提升召回率',
-  'RAG 系统的核心架构、关键组件和最佳实践，从文档处理到向量检索的完整指南。',
+1. Recommended chunk size: 512-1024 tokens with overlap
+2. Use multilingual embedding models like BGE-M3
+3. Use Qdrant or Weaviate as the vector store in production
+4. Incorporate query rewriting and HyDE to improve recall',
+  'Core architecture, key components, and best practices for RAG systems, from document processing to vector retrieval.',
   'wiki',
   'published'
 );

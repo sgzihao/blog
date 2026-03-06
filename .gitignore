@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Dev runtime
+.dev-logs/
+.dev-pids/
+
+# Environment (keep .env.example and .env.local as templates)
+frontend/.env
+!frontend/.env.example
+!frontend/.env.local
+
+# OS
+.DS_Store

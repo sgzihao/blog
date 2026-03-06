@@ -2,6 +2,6 @@ name = "techblog-frontend"
 pages_build_output_dir = "./dist"
 
 [vars]
-PUBLIC_API_URL = "https://techblog-api.sgzihao.workers.dev"
+PUBLIC_API_URL = "https://YOUR_WORKER.workers.dev"  # ← your Workers API URL from `wrangler deploy`
 # Note: ADMIN_TOKEN is used in the browser; suitable only for personal/small use.
 # For better security, set it in Cloudflare Pages Environment Variables.

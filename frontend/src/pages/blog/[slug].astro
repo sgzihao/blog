@@ -106,6 +106,21 @@ const categories = splitComma(article.categories)
           </div>
         )}
 
+        <!-- JSON-LD Article Schema -->
+        <script type="application/ld+json" set:html={JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: article.title,
+          description: article.excerpt || '',
+          datePublished: article.created_at,
+          dateModified: article.updated_at,
+          image: article.cover_image || undefined,
+          author: {
+            '@type': 'Person',
+            name: import.meta.env.PUBLIC_AUTHOR || 'Author',
+          },
+        })} />
+
         <!-- Article Navigation -->
         <div class="mt-10 pt-8 border-t border-surface-700 flex items-center justify-between">
           <a href="/blog" class="btn-secondary">

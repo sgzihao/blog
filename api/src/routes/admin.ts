@@ -4,15 +4,16 @@ import type { Bindings, ArticleInput } from '../types'
 
 export const adminRoutes = new Hono<{ Bindings: Bindings }>()
 
-// 所有管理接口都需要认证
+// All admin routes require authentication
 adminRoutes.use('*', authMiddleware)
 
-// ==================== 文章管理 ====================
+// ==================== Article Management ====================
 
-// GET /api/admin/articles - 获取所有文章（包括草稿）
+// GET /api/admin/articles - Get all articles (including drafts)
 adminRoutes.get('/articles', async (c) => {
   const { type, status, page = '1', limit = '20' } = c.req.query()
-  const offset = (parseInt(page) - 1) * parseInt(limit)
+  const parsedLimit = Math.min(Math.max(1, parseInt(limit) || 20), 100)
+  const offset = (parseInt(page) - 1) * parsedLimit
 
   let conditions: string[] = []
   const params: any[] = []
@@ -38,18 +39,18 @@ adminRoutes.get('/articles', async (c) => {
       GROUP BY a.id
       ORDER BY a.updated_at DESC
       LIMIT ? OFFSET ?
-    `).bind(...params, parseInt(limit), offset).all()
+    `).bind(...params, parsedLimit, offset).all()
   ])
 
   return c.json({
     results: articles.results,
     total: countResult?.total ?? 0,
     page: parseInt(page),
-    limit: parseInt(limit)
+    limit: parsedLimit
   })
 })
 
-// POST /api/admin/articles - 创建文章
+// POST /api/admin/articles - Create article
 adminRoutes.post('/articles', async (c) => {
   const body = await c.req.json<ArticleInput>()
   const { slug, title, content, excerpt, type = 'blog', status = 'draft', cover_image, category_ids = [], tag_ids = [] } = body
@@ -58,7 +59,7 @@ adminRoutes.post('/articles', async (c) => {
     return c.json({ error: 'Missing required fields: slug, title, content' }, 400)
   }
 
-  // 检查 slug 是否已存在
+  // Check if slug already exists
   const existing = await c.env.DB.prepare(`SELECT id FROM articles WHERE slug = ?`).bind(slug).first()
   if (existing) {
     return c.json({ error: 'Slug already exists' }, 409)
@@ -76,7 +77,7 @@ adminRoutes.post('/articles', async (c) => {
   return c.json({ success: true, id: articleId, slug }, 201)
 })
 
-// PUT /api/admin/articles/:slug - 更新文章
+// PUT /api/admin/articles/:slug - Update article
 adminRoutes.put('/articles/:slug', async (c) => {
   const slug = c.req.param('slug')
   const body = await c.req.json<Partial<ArticleInput>>()
@@ -86,7 +87,7 @@ adminRoutes.put('/articles/:slug', async (c) => {
 
   const { title, content, excerpt, type, status, cover_image, category_ids, tag_ids } = body
 
-  // 动态构建更新语句
+  // Dynamically build update statement
   const updates: string[] = []
   const params: any[] = []
 
@@ -116,7 +117,7 @@ adminRoutes.put('/articles/:slug', async (c) => {
   return c.json({ success: true, slug })
 })
 
-// DELETE /api/admin/articles/:slug - 删除文章
+// DELETE /api/admin/articles/:slug - Delete article
 adminRoutes.delete('/articles/:slug', async (c) => {
   const slug = c.req.param('slug')
   const result = await c.env.DB.prepare(`DELETE FROM articles WHERE slug = ?`).bind(slug).run()
@@ -128,7 +129,7 @@ adminRoutes.delete('/articles/:slug', async (c) => {
   return c.json({ success: true })
 })
 
-// ==================== 分类管理 ====================
+// ==================== Category Management ====================
 
 adminRoutes.post('/categories', async (c) => {
   const { name, slug, description, color } = await c.req.json()
@@ -158,7 +159,7 @@ adminRoutes.delete('/categories/:id', async (c) => {
   return c.json({ success: true })
 })
 
-// ==================== 标签管理 ====================
+// ==================== Tag Management ====================
 
 adminRoutes.post('/tags', async (c) => {
   const { name, slug } = await c.req.json()
@@ -177,7 +178,7 @@ adminRoutes.delete('/tags/:id', async (c) => {
   return c.json({ success: true })
 })
 
-// ==================== 统计信息 ====================
+// ==================== Statistics ====================
 
 adminRoutes.get('/stats', async (c) => {
   const [totalArticles, publishedArticles, totalViews, totalTags, totalCategories] = await Promise.all([
@@ -198,14 +199,14 @@ adminRoutes.get('/stats', async (c) => {
   })
 })
 
-// ==================== 辅助函数 ====================
+// ==================== Helper Functions ====================
 
 async function updateRelations(db: D1Database, articleId: number, categoryIds: number[], tagIds: number[]) {
-  // 清除旧关联
+  // Clear old associations
   await db.prepare(`DELETE FROM article_categories WHERE article_id = ?`).bind(articleId).run()
   await db.prepare(`DELETE FROM article_tags WHERE article_id = ?`).bind(articleId).run()
 
-  // 批量插入新关联
+  // Batch insert new associations
   const stmts: D1PreparedStatement[] = []
 
   for (const catId of categoryIds) {

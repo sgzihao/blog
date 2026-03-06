@@ -3,9 +3,10 @@ import type { Bindings } from '../types'
 
 export const searchRoutes = new Hono<{ Bindings: Bindings }>()
 
-// GET /api/search?q=关键词&type=blog
+// GET /api/search?q=keyword&type=blog
 searchRoutes.get('/', async (c) => {
   const { q, type, limit = '20' } = c.req.query()
+  const parsedLimit = Math.min(Math.max(1, parseInt(limit) || 20), 50)
 
   if (!q || q.trim().length === 0) {
     return c.json({ results: [], query: '' })
@@ -13,8 +14,8 @@ searchRoutes.get('/', async (c) => {
 
   const query = q.trim()
 
-  // FTS5 查询：支持前缀匹配
-  // 将每个词加上 * 支持前缀搜索
+  // FTS5 query: supports prefix matching
+  // Add * to each word for prefix search
   const ftsQuery = query.split(/\s+/).map(w => `"${w}"*`).join(' OR ')
 
   let typeFilter = ''
@@ -25,7 +26,7 @@ searchRoutes.get('/', async (c) => {
     params.push(type)
   }
 
-  params.push(parseInt(limit))
+  params.push(parsedLimit)
 
   try {
     const results = await c.env.DB.prepare(`
@@ -41,11 +42,11 @@ searchRoutes.get('/', async (c) => {
 
     return c.json({ results: results.results, query })
   } catch (e) {
-    // FTS 查询失败时降级到 LIKE 搜索
+    // Fallback to LIKE search when FTS query fails
     const likeQuery = `%${query}%`
     const fallbackParams: any[] = [likeQuery, likeQuery, 'published']
     if (type) fallbackParams.push(type)
-    fallbackParams.push(parseInt(limit))
+    fallbackParams.push(parsedLimit)
 
     const results = await c.env.DB.prepare(`
       SELECT slug, title, excerpt, type, cover_image, created_at

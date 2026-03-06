@@ -69,6 +69,20 @@ const tags = splitComma(article.tags)
           </div>
         )}
 
+        <!-- JSON-LD Article Schema -->
+        <script type="application/ld+json" set:html={JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: article.title,
+          description: article.excerpt || '',
+          datePublished: article.created_at,
+          dateModified: article.updated_at,
+          author: {
+            '@type': 'Person',
+            name: import.meta.env.PUBLIC_AUTHOR || 'Author',
+          },
+        })} />
+
         <div class="mt-10 pt-8 border-t border-surface-700 flex items-center justify-between">
           <a href="/wiki" class="btn-secondary">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

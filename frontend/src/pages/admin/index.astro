@@ -1,6 +1,7 @@
 ---
 // src/pages/admin/index.astro
 import BaseLayout from '../../layouts/BaseLayout.astro'
+const siteEmoji = import.meta.env.PUBLIC_SITE_EMOJI || '🤖'
 ---
 
 <BaseLayout title="Admin Dashboard">
@@ -9,7 +10,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
     <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
       <div class="w-full max-w-sm">
         <div class="text-center mb-8">
-          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-cyan/20 to-accent-purple/20 border border-accent-cyan/20 text-3xl flex items-center justify-center mx-auto mb-4">🤖</div>
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-cyan/20 to-accent-purple/20 border border-accent-cyan/20 text-3xl flex items-center justify-center mx-auto mb-4">{siteEmoji}</div>
           <h1 class="text-2xl font-display font-bold text-white">Admin Dashboard</h1>
           <p class="text-slate-400 text-sm mt-1">Sign in with admin token</p>
         </div>
@@ -636,7 +637,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 
   // Preview toggle
   let previewMode = false
-  function renderMarkdownPreview(content: string) {
+  let markdownModule: any = null
+
+  async function renderMarkdownPreview(content: string): Promise<string> {
+    if (!markdownModule) {
+      const mdPath = '/lib/markdown.js'
+      markdownModule = await import(/* @vite-ignore */ mdPath)
+    }
+    if (typeof markdownModule.renderMarkdown === 'function') {
+      return markdownModule.renderMarkdown(content)
+    }
     const escaped = String(content || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -652,10 +662,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 
     if (previewMode) {
       const content = (textarea as HTMLTextAreaElement).value
-      preview.innerHTML = renderMarkdownPreview(content)
+      preview.innerHTML = '<p class="text-slate-500">Rendering...</p>'
       textarea.classList.add('hidden')
       preview.classList.remove('hidden')
       btn.textContent = 'Edit'
+      preview.innerHTML = await renderMarkdownPreview(content)
     } else {
       textarea.classList.remove('hidden')
       preview.classList.add('hidden')

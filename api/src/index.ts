@@ -10,7 +10,7 @@ import type { Bindings } from './types'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-// ==================== 中间件 ====================
+// ==================== Middleware ====================
 app.use('*', logger())
 
 app.use('*', async (c, next) => {
@@ -49,7 +49,7 @@ app.use('*', async (c, next) => {
   })(c, next)
 })
 
-// ==================== 健康检查 ====================
+// ==================== Health Check ====================
 app.get('/', (c) => c.json({
   status: 'ok',
   service: 'TechBlog API',
@@ -57,18 +57,18 @@ app.get('/', (c) => c.json({
   timestamp: new Date().toISOString()
 }))
 
-// ==================== 路由挂载 ====================
+// ==================== Route Mounting ====================
 app.route('/api/articles', articleRoutes)
 app.route('/api/search', searchRoutes)
 app.route('/api/tags', taxonomyRoutes)
 app.route('/api/categories', taxonomyRoutes)
 app.route('/api/admin', adminRoutes)
-app.route('/api', uploadRoutes)   // 挂载 /api/media/:id 和 /api/upload/image
+app.route('/api', uploadRoutes)   // mounts /api/media/:id and /api/upload/image
 
-// ==================== 404 处理 ====================
+// ==================== 404 Handler ====================
 app.notFound((c) => c.json({ error: 'Not Found', path: c.req.path }, 404))
 
-// ==================== 错误处理 ====================
+// ==================== Error Handler ====================
 app.onError((err, c) => {
   console.error(`Error: ${err.message}`, err.stack)
   return c.json({

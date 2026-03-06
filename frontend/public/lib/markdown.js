@@ -20,6 +20,9 @@ function inlineMarkdown(text) {
   out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>')
   out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => {
+    if (/^\s*(javascript|data|vbscript):/i.test(href)) {
+      return label
+    }
     const safeHref = escapeAttr(href)
     const external = /^https?:\/\//i.test(href)
     const extra = external ? ' target="_blank" rel="noopener noreferrer"' : ''
@@ -155,4 +158,22 @@ export function renderMarkdown(content) {
   }
 
   return html.join('\n')
+}
+
+// Extract table of contents from markdown content
+export function extractToc(content) {
+  const headings = []
+  const regex = /^(#{1,3})\s+(.+)$/gm
+  let match
+  while ((match = regex.exec(String(content || ''))) !== null) {
+    const level = match[1].length
+    const text = match[2].replace(/[*_`]/g, '').trim()
+    const id = text.toLowerCase()
+      .replace(/[^\w\u4e00-\u9fff\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'section'
+    headings.push({ id, text, level })
+  }
+  return headings
 }

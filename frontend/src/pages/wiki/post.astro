@@ -6,7 +6,8 @@ const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').repla
 
 <SiteLayout title="Wiki Note">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-    <article class="min-w-0">
+    <div class="flex gap-12">
+    <article class="flex-1 min-w-0">
       <div id="runtime-config" data-api-url={apiUrl} class="hidden"></div>
       <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8">
         <a href="/" class="hover:text-slate-300 transition-colors">Home</a>
@@ -35,11 +36,20 @@ const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').repla
         </div>
       </div>
     </article>
+
+      <!-- Table of Contents (Sidebar) -->
+      <aside id="toc-sidebar" class="hidden xl:block w-56 flex-shrink-0" style="display:none;">
+        <div class="sticky top-24">
+          <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Contents</h4>
+          <nav id="toc-nav" class="space-y-1"></nav>
+        </div>
+      </aside>
+    </div>
   </div>
 </SiteLayout>
 
 <script type="module">
-  import { renderMarkdown as renderMarkdownRuntime } from '/lib/markdown.js'
+  import { renderMarkdown as renderMarkdownRuntime, extractToc as extractTocRuntime } from '/lib/markdown.js'
 
   const runtimeConfig = document.getElementById('runtime-config')
   const API = (runtimeConfig?.getAttribute('data-api-url') || 'http://localhost:8787').replace(/\/+$/, '')
@@ -103,6 +113,34 @@ const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8787').repla
       }
 
       articleShell.classList.remove('hidden')
+
+      // Build TOC sidebar
+      const extractToc = typeof extractTocRuntime === 'function' ? extractTocRuntime : null
+      if (extractToc) {
+        const toc = extractToc(article.content || '')
+        const tocNav = document.getElementById('toc-nav')
+        const tocSidebar = document.getElementById('toc-sidebar')
+        if (toc.length > 0 && tocNav && tocSidebar) {
+          tocNav.innerHTML = toc.map(item => {
+            const pad = item.level === 1 ? '' : item.level === 2 ? 'pl-3' : 'pl-6'
+            return `<a href="#${item.id}" class="block text-sm text-slate-400 hover:text-accent-purple transition-colors leading-5 toc-item ${item.level === 1 ? 'font-medium' : ''} ${pad}" data-id="${item.id}">${item.text}</a>`
+          }).join('')
+          tocSidebar.style.display = ''
+
+          // Highlight active TOC item on scroll
+          const tocItems = tocNav.querySelectorAll('.toc-item[data-id]')
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                tocItems.forEach(el => el.classList.remove('text-accent-purple'))
+                const active = tocNav.querySelector(`.toc-item[data-id="${entry.target.id}"]`)
+                if (active) active.classList.add('text-accent-purple')
+              }
+            })
+          }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 })
+          document.querySelectorAll('h1[id], h2[id], h3[id]').forEach(h => observer.observe(h))
+        }
+      }
     } catch (e) {
       showError('Failed to load article.')
     }
